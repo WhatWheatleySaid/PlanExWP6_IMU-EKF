@@ -24,6 +24,7 @@ class SimulationController(object):
         rospy.init_node(self.name)
 
         #wait for service to be available
+        rospy.loginfo('waiting for /gazebo/pause_physics service... (start gazebo via "rosrun gazebo_ros gazebo")')
         rospy.wait_for_service('/gazebo/pause_physics')
         rospy.loginfo('The service \'/gazebo/pause_physics\' has been found')
 
