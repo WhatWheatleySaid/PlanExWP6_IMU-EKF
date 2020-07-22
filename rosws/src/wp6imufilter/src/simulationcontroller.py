@@ -3,14 +3,14 @@ import rospy
 from std_srvs.srv import Empty, EmptyResponse
 from gazebo_msgs.srv import SetModelConfiguration, SetModelConfigurationRequest, SetModelConfigurationResponse
 import time
-import Tkinter
+import Tkinter as tk
 
-class ControllerGUI(Tkinter.Frame):
+class ControllerGUI(tk.Frame):
     def __init__(self,controller_node, *args, **kwargs):
-        Tkinter.Frame.__init__(self, *args, **kwargs)
+        tk.Frame.__init__(self, *args, **kwargs)
         self.controller_node = controller_node
-        self.pause_button = Tkinter.Button(text='pause', command = controller_node._pause_physics_client)
-        self.unpause_button = Tkinter.Button(text='unpause', command = controller_node._unpause_physics_client)
+        self.pause_button = tk.Button(text='pause', command = controller_node._pause_physics_client)
+        self.unpause_button = tk.Button(text='unpause', command = controller_node._unpause_physics_client)
         self.pause_button.pack()
         self.unpause_button.pack()
 
@@ -24,6 +24,7 @@ class SimulationController(object):
         rospy.init_node(self.name)
 
         #wait for service to be available
+        rospy.loginfo('waiting for /gazebo/pause_physics service... (start gazebo via "rosrun gazebo_ros gazebo")')
         rospy.wait_for_service('/gazebo/pause_physics')
         rospy.loginfo('The service \'/gazebo/pause_physics\' has been found')
 
@@ -49,7 +50,7 @@ class SimulationController(object):
 
 if __name__ == '__main__':
     
-    root = Tkinter.Tk()
+    root = tk.Tk()
     controller_node = SimulationController()
     gui = ControllerGUI(controller_node,master = root)
     root.mainloop()
