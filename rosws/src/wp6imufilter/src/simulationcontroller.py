@@ -2,6 +2,18 @@
 import rospy
 from std_srvs.srv import Empty, EmptyResponse
 from gazebo_msgs.srv import SetModelConfiguration, SetModelConfigurationRequest, SetModelConfigurationResponse
+import time
+import Tkinter
+
+class ControllerGUI(Tkinter.Frame):
+    def __init__(self,controller_node, *args, **kwargs):
+        Tkinter.Frame.__init__(self, *args, **kwargs)
+        self.controller_node = controller_node
+        self.pause_button = Tkinter.Button(text='pause', command = controller_node._pause_physics_client)
+        self.unpause_button = Tkinter.Button(text='unpause', command = controller_node._unpause_physics_client)
+        self.pause_button.pack()
+        self.unpause_button.pack()
+
 
 class SimulationController(object):
     #Class for simulation control
@@ -11,8 +23,6 @@ class SimulationController(object):
 
         rospy.init_node(self.name)
 
-        self.working_freq = rospy.Rate(0.25)
-        
         #wait for service to be available
         rospy.wait_for_service('/gazebo/pause_physics')
         rospy.loginfo('The service \'/gazebo/pause_physics\' has been found')
@@ -20,16 +30,25 @@ class SimulationController(object):
         self.pause_physics_client = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.unpause_physics_client = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
     
-    def run(self):
-        rospy.loginfo('Starting simulation controller')
-        while not rospy.is_shutdown():
-            self.unpause_physics_client()
-            rospy.loginfo('Unpause request has been sent')
-            self.working_freq.sleep()
-            self.pause_physics_client()
-            rospy.loginfo('Pause request has been sent')
-            self.working_freq.sleep()
+    # def run(self):
+    #     rospy.loginfo('Starting simulation controller')
+    #     while not rospy.is_shutdown():
+    #         self._unpause_physics_client()
+    #         self._pause_physics_client()
+
+    def _pause_physics_client(self):
+        self.pause_physics_client()
+        rospy.loginfo('Pause request has been sent')
+        # time.sleep(4)
+    
+    def _unpause_physics_client(self):
+        self.unpause_physics_client()
+        rospy.loginfo('Unpause request has been sent')
+        # time.sleep(4)
 
 if __name__ == '__main__':
-    simulationcontroller = SimulationController()
-    simulationcontroller.run()
+    
+    root = Tkinter.Tk()
+    controller_node = SimulationController()
+    gui = ControllerGUI(controller_node,master = root)
+    root.mainloop()
