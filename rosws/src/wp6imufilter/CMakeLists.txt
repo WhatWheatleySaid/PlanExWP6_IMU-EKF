@@ -48,15 +48,13 @@ catkin_python_setup()
 
 ## Generate messages in the 'msg' folder
 add_message_files(
-   FILES
-   wheel_speed.msg
+#   FILES
 #   Message2.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
-   FILES
-    set_speed.srv
+#   FILES
 #   Service2.srv
 )
 

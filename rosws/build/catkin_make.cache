@@ -1,0 +1,2 @@
+gazebo_ros_demos/gazebo_tutorials:gazebo_ros_demos/rrbot_control:gazebo_ros_demos/rrbot_description:gazebo_ros_demos/rrbot_gazebo:wp6imufilter
+-DCATKIN_DEVEL_PREFIX=/home/lee/Documents/git/planex-wp6/rosws/devel -DCMAKE_INSTALL_PREFIX=/home/lee/Documents/git/planex-wp6/rosws/install -G Unix Makefiles

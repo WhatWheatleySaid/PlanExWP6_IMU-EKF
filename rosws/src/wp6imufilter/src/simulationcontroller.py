@@ -29,6 +29,7 @@ class SimulationController(object):
 
         self.pause_physics_client = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.unpause_physics_client = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
+
     
     # def run(self):
     #     rospy.loginfo('Starting simulation controller')

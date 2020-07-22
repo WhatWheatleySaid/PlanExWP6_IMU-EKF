@@ -1,0 +1,8 @@
+prefix=/home/lee/Documents/git/planex-wp6/rosws/devel
+
+Name: wp6imufilter
+Description: Description of wp6imufilter
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
