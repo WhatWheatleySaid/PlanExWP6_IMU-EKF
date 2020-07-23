@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot name="simple_cube">
+  <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material>
+
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="1 1 1"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+</robot>
