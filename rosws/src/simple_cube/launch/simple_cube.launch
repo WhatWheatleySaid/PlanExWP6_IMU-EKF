@@ -1,0 +1,5 @@
+<launch>
+  <param name="simple_cube" textfile="$(find simple_cube)/urdf/simple_cube.urdf"/>
+<!-- Show in Rviz   -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find simple_cube)/launch/simple_cube.rviz"/>
+</launch>

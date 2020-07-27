@@ -1,0 +1,22 @@
+<package>
+  <name>simple_cube_gazebo</name>
+  <version>0.0.0</version>
+  <description>The simple cube package</description>
+
+  <maintainer email="g.liang@campus.tu-berlin.de">Ga Man Liang</maintainer>
+
+  <license>BSD</license>
+
+  <author email="g.liang@campus.tu-berlin.de">Ga Man Liang</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>gazebo_plugins</run_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>gazebo_ros_control</run_depend>
+  <run_depend>rrbot_control</run_depend>
+  <run_depend>rrbot_description</run_depend>
+
+  <export>
+  </export>
+</package>
