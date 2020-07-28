@@ -21,7 +21,7 @@ class ControllerGUI(tk.Frame):
         controller_node._pause_physics_client()
         
         #matplotlib canvas:
-        self.handle = None
+        self.handles = []
         self.mpl_frame = tk.Frame(master = self)
         self.fig = Figure(figsize=(5, 4), dpi=100)
         self.ax = self.fig.add_subplot(111)
@@ -49,7 +49,7 @@ class ControllerGUI(tk.Frame):
         self.save_button.pack(fill = tk.BOTH, side = tk.BOTTOM)
         self.pack(fill = tk.BOTH)
         controller_node._reset_cube()
-    
+
     def save_data(self):
         dir = tkFileDialog.asksaveasfilename(title = 'select place to save', defaultextension = '.csv')
         if dir != '' and dir != None:
@@ -84,22 +84,40 @@ class ControllerGUI(tk.Frame):
                 print('done')
 
     def plot_data(self,data_list):
+        lax = []
+        lay = []
         laz = []
-        ts = []
+        seq = []
+        avx = []
+        avy = []
+        avz = []
+        
         for data in data_list:
-            ts.append(data.header.stamp.secs)
-            # avx = data.angular_velocity.x
-            # avy = data.angular_velocity.y
-            # avz = data.angular_velocity.z
-            # lax = data.linear_acceleration.x
-            # lay = data.linear_acceleration.y
+            seq.append(data.header.seq)
+            avx.append(data.angular_velocity.x)
+            avy.append(data.angular_velocity.y)
+            avz.append(data.angular_velocity.z)
+            lax.append(data.linear_acceleration.x)
+            lay.append(data.linear_acceleration.y)
             laz.append(data.linear_acceleration.z)
-        if self.handle != None:
-            self.handle.remove()
-        [self.handle] = self.ax.plot(ts, laz, linestyle = '-', color = 'b', marker = '.')
+        plot_data = [
+            [seq, avx, 'green', 'angular-vel-x'],
+            [seq, avy, 'blue', 'angular-vel-y'],
+            [seq, avz, 'cyan', 'angular-vel-x'],
+            [seq, lax, 'black', 'linear-acc-x'],
+            [seq, lay, 'red', 'linear-acc-y'],
+            [seq, laz, 'orange', 'linear-acc-z']
+        ]
+        if self.handles:
+            for handle in self.handles:
+                handle[0].remove()
+        self.handles = []
+        for pd in plot_data:
+            self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
         self.ax.relim()
         self.ax.autoscale_view()
-        self.ax.set_xlim(xmin = ts[0], xmax = ts[-1])
+        self.ax.legend()
+        self.ax.set_xlim(xmin = seq[0], xmax = seq[-1])
         self.canvas.draw()
         return
         
@@ -114,7 +132,7 @@ class SimulationController(object):
         self.modelstate.model_name = 'simple_cube'
         self.modelstate.pose.position.x = 0
         self.modelstate.pose.position.y = 0
-        self.modelstate.pose.position.z = 5
+        self.modelstate.pose.position.z = 10
         self.modelstate.pose.orientation.x = 0
         self.modelstate.pose.orientation.y = 0
         self.modelstate.pose.orientation.z = 0
@@ -146,9 +164,8 @@ class SimulationController(object):
             self.GUI.plot_data(self.data_list)
         
     def _imu_topic_callback(self,data):
-        rospy.loginfo('Received IMU msg: {0}'.format(data))
+        # rospy.loginfo('Received IMU msg: {0}'.format(data))
         self.data_list.append(data)
-        return
 
     def _pause_physics_client(self):
         self.pause_physics_client()
