@@ -19,7 +19,7 @@ class ControllerGUI(tk.Frame):
         tk.Frame.__init__(self, *args, **kwargs)
         controller_node.GUI = self
         controller_node._pause_physics_client()
-        
+
         #matplotlib canvas:
         self.handles = []
         self.mpl_frame = tk.Frame(master = self)
@@ -47,7 +47,12 @@ class ControllerGUI(tk.Frame):
         self.reset_button.pack(fill = tk.BOTH, side = tk.BOTTOM)
         self.save_button.pack(fill = tk.BOTH, side = tk.BOTTOM)
         self.pack(fill = tk.BOTH)
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
         controller_node._reset_cube()
+
+    def on_closing(self):
+        rospy.signal_shutdown('GUI was closed, shutting down simulationcontroller node')
+        self.master.destroy()
 
     def save_data(self):
         dir = tkFileDialog.asksaveasfilename(title = 'select place to save', defaultextension = '.csv')
@@ -136,8 +141,19 @@ class SimulationController(object):
         self.modelstate.pose.orientation.y = 0
         self.modelstate.pose.orientation.z = 0
         self.modelstate.pose.orientation.w = 0
+
+        self.resting_modelstate = ModelState()
+        self.resting_modelstate.model_name = 'simple_cube'
+        self.resting_modelstate.pose.position.x = 0
+        self.resting_modelstate.pose.position.y = 0
+        self.resting_modelstate.pose.position.z = 0
+        self.resting_modelstate.pose.orientation.x = 0
+        self.resting_modelstate.pose.orientation.y = 0
+        self.resting_modelstate.pose.orientation.z = 0
+        self.resting_modelstate.pose.orientation.w = 0
         rospy.init_node(self.name)
 
+        self.reset_flag = True
         #wait for services to be available
         rospy.loginfo('waiting for /gazebo/pause_physics service... (start gazebo via "rosrun gazebo_ros gazebo")')
         rospy.wait_for_service('/gazebo/pause_physics')
@@ -152,7 +168,7 @@ class SimulationController(object):
         self.set_cube_state_client = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         self.sub = rospy.Subscriber('/imu', ImuMsg, callback=self._imu_topic_callback)
         
-        self.plot_rate = rospy.Rate(0.5)
+        self.plot_rate = rospy.Rate(5)
         self.update_plot_thread = threading.Thread(target = self.update_plot)
         self.update_plot_thread.daemon = True
         self.update_plot_thread.start()
@@ -160,7 +176,9 @@ class SimulationController(object):
     def update_plot(self):
         while not rospy.is_shutdown():
             self.plot_rate.sleep()
-            self.GUI.plot_data(self.data_list)
+            if not rospy.is_shutdown() and self.data_list:
+                self.GUI.plot_data(self.data_list)
+            
         
     def _imu_topic_callback(self,data):
         # rospy.loginfo('Received IMU msg: {0}'.format(data))
@@ -171,15 +189,28 @@ class SimulationController(object):
         rospy.loginfo('Pause request has been sent')
     
     def _unpause_physics_client(self):
+        if self.reset_flag:
+            self.reset_flag = False
+            self.set_cube_state_client(self.resting_modelstate)
+            self.unpause_physics_client()
+            self.GUI.master.after(1500, self._set_state)
         self.unpause_physics_client()
         rospy.loginfo('Unpause request has been sent')
+
+    def _set_resting_state(self):
+        self.set_cube_state_client(self.resting_modelstate)
+
+    def _set_state(self):
+        self.set_cube_state_client(self.modelstate)
 
     def _reset_cube(self):
         '''
         resets the cubes position and empties gathered data list
         '''
+        self.pause_physics_client()
         self.data_list = []
         self.set_cube_state_client(self.modelstate)
+        self.reset_flag = True
         rospy.loginfo('reset request has been sent')
 
 
