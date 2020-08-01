@@ -73,9 +73,9 @@ class ControllerGUI(tk.Frame):
 
         #position frame and entries/labels:
         self.position_frame = tk.LabelFrame(master = self, text = 'position')
-        tk.Label(master = self.position_frame, text = 'x:\t').grid(column = 0, row = 0)
-        tk.Label(master = self.position_frame, text = 'y:\t').grid(column = 2, row = 0)
-        tk.Label(master = self.position_frame, text = 'z:\t').grid(column = 4, row = 0)
+        tk.Label(master = self.position_frame, text = '\tx: ').grid(column = 0, row = 0)
+        tk.Label(master = self.position_frame, text = '\ty: ').grid(column = 2, row = 0)
+        tk.Label(master = self.position_frame, text = '\tz: ').grid(column = 4, row = 0)
         self.x_pos_entry = tk.Entry(self.position_frame, textvariable = self.x_pos_var)
         self.y_pos_entry = tk.Entry(self.position_frame, textvariable = self.y_pos_var)
         self.z_pos_entry = tk.Entry(self.position_frame, textvariable = self.z_pos_var)
@@ -86,9 +86,9 @@ class ControllerGUI(tk.Frame):
 
         #angular velocity frame and entries/labels:
         self.angularv_frame = tk.LabelFrame(master = self, text = 'angular velocity (1/s)')
-        tk.Label(master = self.angularv_frame, text = 'x:\t').grid(column = 0, row = 0)
-        tk.Label(master = self.angularv_frame, text = 'y:\t').grid(column = 2, row = 0)
-        tk.Label(master = self.angularv_frame, text = 'z:\t').grid(column = 4, row = 0)
+        tk.Label(master = self.angularv_frame, text = '\tx: ').grid(column = 0, row = 0)
+        tk.Label(master = self.angularv_frame, text = '\ty: ').grid(column = 2, row = 0)
+        tk.Label(master = self.angularv_frame, text = '\tz: ').grid(column = 4, row = 0)
         self.x_ang_entry = tk.Entry(self.angularv_frame, textvariable = self.x_ang_var)
         self.y_ang_entry = tk.Entry(self.angularv_frame, textvariable = self.y_ang_var)
         self.z_ang_entry = tk.Entry(self.angularv_frame, textvariable = self.z_ang_var)
@@ -99,9 +99,9 @@ class ControllerGUI(tk.Frame):
 
         #linear velocity frame and entries/labels
         self.linearv_frame = tk.LabelFrame(master = self, text = 'linear velocity (m/s)')
-        tk.Label(master = self.linearv_frame, text = 'x:\t').grid(column = 0, row = 0)
-        tk.Label(master = self.linearv_frame, text = 'y:\t').grid(column = 2, row = 0)
-        tk.Label(master = self.linearv_frame, text = 'z:\t').grid(column = 4, row = 0)
+        tk.Label(master = self.linearv_frame, text = '\tx: ').grid(column = 0, row = 0)
+        tk.Label(master = self.linearv_frame, text = '\ty: ').grid(column = 2, row = 0)
+        tk.Label(master = self.linearv_frame, text = '\tz: ').grid(column = 4, row = 0)
         self.x_linv_entry = tk.Entry(self.linearv_frame, textvariable = self.x_linv_var)
         self.y_linv_entry = tk.Entry(self.linearv_frame, textvariable = self.y_linv_var)
         self.z_linv_entry = tk.Entry(self.linearv_frame, textvariable = self.z_linv_var)
@@ -112,10 +112,10 @@ class ControllerGUI(tk.Frame):
 
         #orientatin frame and entries/labels:
         self.orientation_frame = tk.LabelFrame(master = self, text = 'orientation (quaternion)')
-        tk.Label(master = self.orientation_frame, text = 'x:\t').grid(column = 0, row = 0)
-        tk.Label(master = self.orientation_frame, text = 'y:\t').grid(column = 2, row = 0)
-        tk.Label(master = self.orientation_frame, text = 'z:\t').grid(column = 4, row = 0)
-        tk.Label(master = self.orientation_frame, text = 'w:\t').grid(column = 6, row = 0)
+        tk.Label(master = self.orientation_frame, text = '\tx: ').grid(column = 0, row = 0)
+        tk.Label(master = self.orientation_frame, text = '\ty: ').grid(column = 2, row = 0)
+        tk.Label(master = self.orientation_frame, text = '\tz: ').grid(column = 4, row = 0)
+        tk.Label(master = self.orientation_frame, text = '\tw: ').grid(column = 6, row = 0)
         self.x_ori_entry = tk.Entry(self.orientation_frame, textvariable = self.x_ori_var)
         self.y_ori_entry = tk.Entry(self.orientation_frame, textvariable = self.y_ori_var)
         self.z_ori_entry = tk.Entry(self.orientation_frame, textvariable = self.z_ori_var)
