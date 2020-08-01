@@ -2,6 +2,7 @@
 import numpy as np
 from pathlib import Path
 import pandas as pd
+from matplotlib import pyplot as plt
 
 from kalman import quaternion_tools as qtool
 
@@ -17,7 +18,9 @@ class EkfEstimation:
         self.gyro_bias()
 
         self.ekf_ori_estimation()
-        0
+
+    def _return(self):
+        return self.quat
 
     def cleanup_df(self, df):
         # determine length
@@ -50,6 +53,7 @@ class EkfEstimation:
     def ekf_ori_estimation(self):
         n = self.df.acc_x.shape[0]
         quat = np.zeros((n, 4))
+        quat[0,] = [1,0,0,0]
         P = np.eye(4)
         V = np.eye(4) * 0.00001
         W = np.zeros((6, 6))
@@ -62,20 +66,14 @@ class EkfEstimation:
         Fx = np.zeros((4, 4))
         for i in range(1, ds_gyr.shape[0]):
             q_gyr = qtool.quaternion_from_gyr(ds_gyr[i - 1,], self.rate)
-            # while waiting for sim data, generate gyr quat
-            q_gyr = np.hstack(np.array(
-                [np.random.random(1), np.random.random(1), np.random.random(1), np.random.random(1)])).flatten()
+
             g1, g2, g3, g4 = q_gyr
             Fx[0, :] = [g1, -g2, -g3, -g4]
             Fx[1, :] = [g2, g1, g4, -g3]
             Fx[2, :] = [g3, -g4, g1, g2]
             Fx[3, :] = [g4, g3, -g2, g1]
-            q_accmag = qtool.quaternion_from_accmag(ds_acc[i,], ds_mag[i,])
-
-            # while waiting for sim data, generate accmag quat
-            q_accmag = np.hstack(np.array(
-                [np.random.random(1), np.random.random(1), np.random.random(1), np.random.random(1)])).flatten()
-            x_hat_pre = qtool.quaternion_multiply(quat[i - 1,], q_gyr)
+            q_accmag = qtool.quaternion_from_accmag(ds_acc[i,], ds_mag[i,]).T
+            x_hat_pre = qtool.quaternion_multiply(quat[i - 1,], q_gyr).T
 
             # compute Hesse matrix
             q1, q2, q3, q4 = x_hat_pre
@@ -109,7 +107,8 @@ class EkfEstimation:
 
 if __name__ == "__main__":
     fpath = Path("kalman/data")
-    df = pd.read_csv(fpath / "test_ds.csv", sep="\t")
+    df = pd.read_csv(fpath / "test_ds2.csv", sep="\t")
 
-    EkfEstimation(df)
+    call = EkfEstimation(df)
+    foo = call._return()
     0
