@@ -6,6 +6,7 @@ from gazebo_msgs.msg import ModelState
 from sensor_msgs.msg import Imu as ImuMsg
 import time
 import Tkinter as tk
+import tkMessageBox as messagebox
 import tkFileDialog
 import csv
 
@@ -36,10 +37,93 @@ class ControllerGUI(tk.Frame):
         self.controller_node = controller_node
         self.pause_button = tk.Button(master = self, text='pause', command = self.controller_node._pause_physics_client)
         self.unpause_button = tk.Button(master = self, text='unpause', command = self.controller_node._unpause_physics_client)
-        self.reset_button = tk.Button(master = self, text='reset', command = self.controller_node._reset_cube)
+        self.reset_button = tk.Button(master = self, text='reset', command = self.reset_cube)
         self.save_button = tk.Button(master = self, text='save to .CSV', command = self.save_data)
+    
+        #tkinter variables:
+        self.x_pos_var = tk.StringVar()
+        self.x_pos_var.set('0')
+        self.y_pos_var = tk.StringVar()
+        self.y_pos_var.set('0')
+        self.z_pos_var = tk.StringVar()
+        self.z_pos_var.set('10')
+        self.x_ori_var = tk.StringVar()
+        self.x_ori_var.set('0')
+        self.y_ori_var = tk.StringVar()
+        self.y_ori_var.set('0')
+        self.z_ori_var = tk.StringVar()
+        self.z_ori_var.set('0')
+        self.w_ori_var = tk.StringVar()
+        self.w_ori_var.set('0')
         
-        # self.toolbar.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        self.x_ang_var = tk.StringVar()
+        self.x_ang_var.set('0')
+        self.y_ang_var = tk.StringVar()
+        self.y_ang_var.set('0')
+        self.z_ang_var = tk.StringVar()
+        self.z_ang_var.set('0')
+
+        self.x_linv_var = tk.StringVar()
+        self.x_linv_var.set('0')
+        self.y_linv_var = tk.StringVar()
+        self.y_linv_var.set('0')
+        self.z_linv_var = tk.StringVar()
+        self.z_linv_var.set('0')
+
+        #position frame and entries/labels:
+        self.position_frame = tk.LabelFrame(master = self, text = 'position')
+        tk.Label(master = self.position_frame, text = '\tx: ').grid(column = 0, row = 0)
+        tk.Label(master = self.position_frame, text = '\ty: ').grid(column = 2, row = 0)
+        tk.Label(master = self.position_frame, text = '\tz: ').grid(column = 4, row = 0)
+        self.x_pos_entry = tk.Entry(self.position_frame, textvariable = self.x_pos_var)
+        self.y_pos_entry = tk.Entry(self.position_frame, textvariable = self.y_pos_var)
+        self.z_pos_entry = tk.Entry(self.position_frame, textvariable = self.z_pos_var)
+        self.x_pos_entry.grid(column = 1, row = 0)
+        self.y_pos_entry.grid(column = 3, row = 0)
+        self.z_pos_entry.grid(column = 5, row = 0)
+        self.position_frame.pack(fill = tk.BOTH, side = tk.BOTTOM)
+
+        #angular velocity frame and entries/labels:
+        self.angularv_frame = tk.LabelFrame(master = self, text = 'angular velocity (1/s)')
+        tk.Label(master = self.angularv_frame, text = '\tx: ').grid(column = 0, row = 0)
+        tk.Label(master = self.angularv_frame, text = '\ty: ').grid(column = 2, row = 0)
+        tk.Label(master = self.angularv_frame, text = '\tz: ').grid(column = 4, row = 0)
+        self.x_ang_entry = tk.Entry(self.angularv_frame, textvariable = self.x_ang_var)
+        self.y_ang_entry = tk.Entry(self.angularv_frame, textvariable = self.y_ang_var)
+        self.z_ang_entry = tk.Entry(self.angularv_frame, textvariable = self.z_ang_var)
+        self.x_ang_entry.grid(column = 1, row = 0)
+        self.y_ang_entry.grid(column = 3, row = 0)
+        self.z_ang_entry.grid(column = 5, row = 0)
+        self.angularv_frame.pack(fill = tk.BOTH, side = tk.BOTTOM)
+
+        #linear velocity frame and entries/labels
+        self.linearv_frame = tk.LabelFrame(master = self, text = 'linear velocity (m/s)')
+        tk.Label(master = self.linearv_frame, text = '\tx: ').grid(column = 0, row = 0)
+        tk.Label(master = self.linearv_frame, text = '\ty: ').grid(column = 2, row = 0)
+        tk.Label(master = self.linearv_frame, text = '\tz: ').grid(column = 4, row = 0)
+        self.x_linv_entry = tk.Entry(self.linearv_frame, textvariable = self.x_linv_var)
+        self.y_linv_entry = tk.Entry(self.linearv_frame, textvariable = self.y_linv_var)
+        self.z_linv_entry = tk.Entry(self.linearv_frame, textvariable = self.z_linv_var)
+        self.x_linv_entry.grid(column = 1, row = 0)
+        self.y_linv_entry.grid(column = 3, row = 0)
+        self.z_linv_entry.grid(column = 5, row = 0)
+        self.linearv_frame.pack(fill = tk.BOTH, side = tk.BOTTOM)
+
+        #orientatin frame and entries/labels:
+        self.orientation_frame = tk.LabelFrame(master = self, text = 'orientation (quaternion)')
+        tk.Label(master = self.orientation_frame, text = '\tx: ').grid(column = 0, row = 0)
+        tk.Label(master = self.orientation_frame, text = '\ty: ').grid(column = 2, row = 0)
+        tk.Label(master = self.orientation_frame, text = '\tz: ').grid(column = 4, row = 0)
+        tk.Label(master = self.orientation_frame, text = '\tw: ').grid(column = 6, row = 0)
+        self.x_ori_entry = tk.Entry(self.orientation_frame, textvariable = self.x_ori_var)
+        self.y_ori_entry = tk.Entry(self.orientation_frame, textvariable = self.y_ori_var)
+        self.z_ori_entry = tk.Entry(self.orientation_frame, textvariable = self.z_ori_var)
+        self.w_ori_entry = tk.Entry(self.orientation_frame, textvariable = self.w_ori_var)
+        self.x_ori_entry.grid(column = 1, row = 0)
+        self.y_ori_entry.grid(column = 3, row = 0)
+        self.z_ori_entry.grid(column = 5, row = 0)
+        self.w_ori_entry.grid(column = 7, row = 0)
+        self.orientation_frame.pack(fill = tk.BOTH, side = tk.BOTTOM)
 
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.pause_button.pack(fill = tk.BOTH, side = tk.BOTTOM)
@@ -53,6 +137,42 @@ class ControllerGUI(tk.Frame):
     def on_closing(self):
         rospy.signal_shutdown('GUI was closed, shutting down simulationcontroller node')
         self.master.destroy()
+
+    def reset_cube(self):
+        self._set_cube_state()
+        self.controller_node._reset_cube()
+
+    def _set_cube_state(self):
+        try:
+            self.controller_node.modelstate.pose.position.x = float(self.x_pos_var.get())
+            self.controller_node.modelstate.pose.position.y = float(self.y_pos_var.get())
+            self.controller_node.modelstate.pose.position.z = float(self.z_pos_var.get())
+            self.controller_node.modelstate.pose.orientation.x = float(self.x_ori_var.get())
+            self.controller_node.modelstate.pose.orientation.y = float(self.y_ori_var.get())
+            self.controller_node.modelstate.pose.orientation.z = float(self.z_ori_var.get())
+            self.controller_node.modelstate.pose.orientation.w = float(self.w_ori_var.get())
+            self.controller_node.modelstate.twist.angular.x = float(self.x_ang_var.get())
+            self.controller_node.modelstate.twist.angular.y = float(self.y_ang_var.get())
+            self.controller_node.modelstate.twist.angular.z = float(self.z_ang_var.get())
+            self.controller_node.modelstate.twist.linear.x = float(self.x_linv_var.get())
+            self.controller_node.modelstate.twist.linear.y = float(self.y_linv_var.get())
+            self.controller_node.modelstate.twist.linear.z = float(self.z_linv_var.get())
+        except:
+            messagebox.showerror('Error', 'Setting cube state failed! Check if your inputs are valid floatingpoint numbers! Setting default values.')
+            self.controller_node.modelstate.pose.position.x = 0
+            self.controller_node.modelstate.pose.position.y = 0
+            self.controller_node.modelstate.pose.position.z = 10
+            self.controller_node.modelstate.pose.orientation.x = 0
+            self.controller_node.modelstate.pose.orientation.y = 0
+            self.controller_node.modelstate.pose.orientation.z = 0
+            self.controller_node.modelstate.pose.orientation.w = 0
+            self.controller_node.modelstate.twist.angular.x = 0
+            self.controller_node.modelstate.twist.angular.y = 0
+            self.controller_node.modelstate.twist.angular.z = 0
+            self.controller_node.modelstate.twist.linear.x = 0
+            self.controller_node.modelstate.twist.linear.y = 0
+            self.controller_node.modelstate.twist.linear.z = 0
+
 
     def save_data(self):
         dir = tkFileDialog.asksaveasfilename(title = 'select place to save', defaultextension = '.csv')
@@ -133,6 +253,7 @@ class SimulationController(object):
         self.objectname = objectname
         self.data_list = []
         self.modelstate = ModelState()
+        print(dir(self.modelstate.twist.linear))
         self.modelstate.model_name = 'simple_cube'
         self.modelstate.pose.position.x = 0
         self.modelstate.pose.position.y = 0
