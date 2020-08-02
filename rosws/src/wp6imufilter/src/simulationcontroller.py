@@ -34,7 +34,6 @@ class ControllerGUI(tk.Frame):
         self.mpl_frame.pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
 
 
-
         self.controller_node = controller_node
         self.pause_button = tk.Button(master = self, text='pause', command = self.controller_node._pause_physics_client)
         self.unpause_button = tk.Button(master = self, text='unpause', command = self.controller_node._unpause_physics_client)
