@@ -36,6 +36,25 @@ class ControllerGUI(tk.Frame):
         self.toolbar.update()
         self.mpl_frame.pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
 
+        #setting up checkboxes for the plot
+        self.checkbox_frame = tk.Frame(master=self.mpl_frame)
+        self.checkbox_var_list = []
+        number_of_plots = 8
+        plot_names = [  'angular-vel-x',
+                        'angular-vel-y',
+                        'angular-vel-x',
+                        'linear-acc-x',
+                        'linear-acc-y',
+                        'linear-acc-z',
+                        'mag-x',
+                        'mag-y',
+                        'mag-x']
+        for i, name in zip(range(0,number_of_plots+1), plot_names):
+            self.checkbox_var_list.append(tk.IntVar())
+            self.checkbox_var_list[i].set(1)
+            tk.Checkbutton(self.checkbox_frame, text = name, variable = self.checkbox_var_list[i], command = self._checkbox_callback).pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
+        self.checkbox_frame.pack(side = tk.RIGHT, fill = tk.Y)
+
 
         self.controller_node = controller_node
         self.pause_button = tk.Button(master = self, text='pause', command = self.controller_node._pause_physics_client)
@@ -141,6 +160,10 @@ class ControllerGUI(tk.Frame):
         rospy.signal_shutdown('GUI was closed, shutting down simulationcontroller node')
         self.master.destroy()
 
+    def _checkbox_callback(self):
+        if self.controller_node.data_list_imu and self.controller_node.simulation_paused:
+            self.plot_data(self.controller_node.data_list_imu, self.controller_node.data_list_mag)
+            
     def reset_cube(self):
         self._set_cube_state()
         self.controller_node._reset_cube()
@@ -259,8 +282,9 @@ class ControllerGUI(tk.Frame):
             for handle in self.handles:
                 handle[0].remove()
         self.handles = []
-        for pd in plot_data:
-            self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
+        for pd, var in zip(plot_data, self.checkbox_var_list):
+            if var.get():
+                self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
         self.ax.legend(bbox_to_anchor=(1.04,1), loc="upper left")
         self.ax.set_xlim(xmin = ts_imu[0], xmax = ts_imu[-1])
         self.fig.subplots_adjust(right=0.7)
@@ -274,6 +298,7 @@ class SimulationController(object):
         self.name = name
         self.GUI = GUI
         self.objectname = objectname
+        self.simulation_paused = True
         self.data_list_imu = []
         self.data_list_mag = []
         self.modelstate = ModelState()
@@ -333,6 +358,7 @@ class SimulationController(object):
 
     def _pause_physics_client(self):
         self.pause_physics_client()
+        self.simulation_paused = True
         rospy.loginfo('Pause request has been sent')
     
     def _unpause_physics_client(self):
@@ -341,6 +367,7 @@ class SimulationController(object):
             self.set_cube_state_client(self.resting_modelstate)
             self.unpause_physics_client()
             self.GUI.master.after(1500, self._set_state)
+        self.simulation_paused = False
         self.unpause_physics_client()
         rospy.loginfo('Unpause request has been sent')
 
@@ -366,4 +393,5 @@ if __name__ == '__main__':
     root = tk.Tk()
     controller_node = SimulationController()
     gui = ControllerGUI(controller_node,master = root)
+    root.resizable(False,False)
     root.mainloop()
