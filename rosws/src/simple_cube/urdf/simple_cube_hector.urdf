@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<robot name="simple_cube_hector">
+  <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material>
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="1 1 1"/>
+      </geometry>
+      <material name="blue"/>      
+    </visual>
+    <collision>
+      <geometry>
+        <box size="1 1 1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.001" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <gazebo>
+    <plugin  name="imu_sensor" filename="libhector_gazebo_ros_imu.so">
+      <always_on>true</always_on>
+      <updateRateHZ>10.0</updateRateHZ>
+      <bodyName>base_link</bodyName>
+      <topicName>imu</topicName>
+      <accelOffset>0 0 0</accelOffset>
+      <accelDrift>0 0 0</accelDrift>
+      <accelDriftFrequency>0 0 0</accelDriftFrequency>
+      <accelGaussianNoise>0 0 0</accelGaussianNoise>
+      <rateOffset>0 0 0</rateOffset>
+      <rateDrift>0 0 0</rateDrift>
+      <rateDriftFrequency>0 0 0</rateDriftFrequency>
+      <rateGaussianNoise>0 0 0</rateGaussianNoise>
+      <yawOffset>0 0 0</yawOffset>
+      <yawDrift>0 0 0</yawDrift>
+      <yawDriftFrequency>0 0 0</yawDriftFrequency>
+      <yawGaussianNoise>0 0 0</yawGaussianNoise>
+      <gaussianNoise>0.0</gaussianNoise>
+    </plugin>
+
+
+    <plugin name="magnetic_senspr" filename="libhector_gazebo_ros_magnetic.so">
+      <updateRate>10.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <frameId>$(arg base_link_frame)</frameId>
+      <topicName>magnetic</topicName>
+      <offset>0 0 0</offset>
+      <drift>0.0 0.0 0.0</drift>
+      <driftFrequency>0 0 0</driftFrequency>
+      <gaussianNoise>0 0 1.3e-2</gaussianNoise>
+    </plugin>
+  </gazebo>
+</robot>
