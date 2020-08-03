@@ -26,7 +26,7 @@ class ControllerGUI(tk.Frame):
         #matplotlib canvas:
         self.handles = []
         self.mpl_frame = tk.Frame(master = self)
-        self.fig = Figure(figsize=(5, 4), dpi=100)
+        self.fig = Figure(figsize=(14, 5), dpi=100)
         self.ax = self.fig.add_subplot(111)
         self.ax.plot([0,0], [0,0])
         self.ax.set_xlabel('t [s]')
@@ -287,7 +287,7 @@ class ControllerGUI(tk.Frame):
                 self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
         self.ax.legend(bbox_to_anchor=(1.04,1), loc="upper left")
         self.ax.set_xlim(xmin = ts_imu[0], xmax = ts_imu[-1])
-        self.fig.subplots_adjust(right=0.74, left = 0.05, top = 0.95, bottom = .15)
+        self.fig.subplots_adjust(right=0.8, left = 0.05, top = 0.95, bottom = .15)
         self.ax.set_ylim(ymin = -20, ymax = 20)
         self.canvas.draw()
         return
