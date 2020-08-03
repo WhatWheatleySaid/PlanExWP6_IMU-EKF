@@ -238,10 +238,11 @@ class ControllerGUI(tk.Frame):
         self.handles = []
         for pd in plot_data:
             self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
-        self.ax.relim()
-        self.ax.autoscale_view()
+        # self.ax.relim()
+        # self.ax.autoscale_view()
         self.ax.legend()
         self.ax.set_xlim(xmin = seq[0], xmax = seq[-1])
+        self.ax.set_ylim(ymin = -20, ymax = 20)
         self.canvas.draw()
         return
         
