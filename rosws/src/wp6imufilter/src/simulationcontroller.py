@@ -391,6 +391,7 @@ class SimulationController(object):
 if __name__ == '__main__':
     
     root = tk.Tk()
+    root.title('Simulation Controller')
     controller_node = SimulationController()
     gui = ControllerGUI(controller_node,master = root)
     root.resizable(False,False)

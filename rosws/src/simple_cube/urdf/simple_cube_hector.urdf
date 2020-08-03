@@ -25,7 +25,8 @@
   <gazebo>
     <plugin  name="imu_sensor" filename="libhector_gazebo_ros_imu.so">
       <always_on>true</always_on>
-      <updateRateHZ>10.0</updateRateHZ>
+      <updateRate>50.0</updateRate>
+      <updateRateHZ>50.0</updateRateHZ>
       <bodyName>base_link</bodyName>
       <topicName>imu</topicName>
       <accelOffset>0 0 0</accelOffset>
@@ -45,7 +46,8 @@
 
 
     <plugin name="magnetic_senspr" filename="libhector_gazebo_ros_magnetic.so">
-      <updateRate>10.0</updateRate>
+      <updateRate>50.0</updateRate>
+      <updateRateHz>50.0</updateRateHz>
       <bodyName>base_link</bodyName>
       <frameId>$(arg base_link_frame)</frameId>
       <topicName>magnetic</topicName>
