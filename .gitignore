@@ -1,6 +1,7 @@
 /.idea
 /rosws/build
 /rosws/devel
+/rosws/src/wp6imufilter/src/kalman/data
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm,git
