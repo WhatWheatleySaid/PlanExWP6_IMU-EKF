@@ -48,7 +48,7 @@ class ControllerGUI(tk.Frame):
                         'linear-acc-z',
                         'mag-x',
                         'mag-y',
-                        'mag-x']
+                        'mag-z']
         for i, name in zip(range(0,number_of_plots+1), plot_names):
             self.checkbox_var_list.append(tk.IntVar())
             self.checkbox_var_list[i].set(1)
@@ -276,7 +276,7 @@ class ControllerGUI(tk.Frame):
             [ts_imu, laz, 'orange', 'linear-acc-z [m/s^2]'],
             [ts_mag, magx, 'magenta', 'mag-x'],
             [ts_mag, magy, 'orchid', 'mag-y'],
-            [ts_mag, magx, 'darkorchid', 'mag-x']
+            [ts_mag, magx, 'darkorchid', 'mag-z']
         ]
         if self.handles:
             for handle in self.handles:
