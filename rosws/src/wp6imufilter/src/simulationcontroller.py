@@ -411,11 +411,11 @@ class SimulationController(object):
 
         self.reset_flag = True
         #wait for services to be available
-        rospy.loginfo('waiting for /gazebo/pause_physics service... (start gazebo via "rosrun gazebo_ros gazebo")')
+        rospy.loginfo('waiting for /gazebo/pause_physics service... (start gazebo via "roslaunch simple_cube_gazebo simple_cube_hector_world.launch")')
         rospy.wait_for_service('/gazebo/pause_physics')
         rospy.loginfo('The service \'/gazebo/pause_physics\' has been found')
 
-        rospy.loginfo('waiting for /gazebo/set_model_state service... (start gazebo via "rosrun gazebo_ros gazebo")')
+        rospy.loginfo('waiting for /gazebo/set_model_state service... (start gazebo via "roslaunch simple_cube_gazebo simple_cube_hector_world.launch")')
         rospy.wait_for_service('/gazebo/set_model_state')
         rospy.loginfo('The service \'/gazebo/set_model_state\' has been found')
 
