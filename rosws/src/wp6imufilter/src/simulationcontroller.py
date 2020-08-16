@@ -332,11 +332,11 @@ class ControllerGUI(tk.Frame):
 
         for pd, var, handle in zip(plot_data, self.checkbox_var_list, self.handles):
             if var.get():
-                handle[0].visible = True
+                handle[0].set_visible(True)
                 handle[0].set_xdata(pd[0])
                 handle[0].set_ydata(pd[1])
             else:
-                handle[0].visible = False
+                handle[0].set_visible(False)
 
         self.ax.legend(bbox_to_anchor=(1.04,1), loc="upper left")
         self.ax.set_xlim(xmin = ts_imu[0], xmax = ts_imu[-1])
@@ -350,22 +350,13 @@ class ControllerGUI(tk.Frame):
         y_axis = self.get_rotated_axis(eulers, self.y_axis)
         z_axis = self.get_rotated_axis(eulers, self.z_axis)
         axis_list = [x_axis, y_axis, z_axis]
-        # plot_data = [
-        #     [x_axis, 'red', 'x'],
-        #     [y_axis, 'green', 'y'],
-        #     [z_axis, 'blue', 'z'],
-        # ]
-        # if self.handles_3d:
-        #     for handle in self.handles_3d:
-        #         handle[0].remove()
-        # self.handles_3d = []
-        # for pd in plot_data:
-        #     self.handles_3d.append( self.ax_3d.plot( [0,pd[0][0]], [0,pd[0][1]], [0,pd[0][2]], color = pd[1]) )
         for handle,axis in zip(self.handles_3d, axis_list):
             handle[0].set_xdata([0, axis[0]])
             handle[0].set_ydata([0, axis[1]])
             handle[0].set_3d_properties([0, axis[2]])
         self.canvas_3d.draw()
+        self.canvas.flush_events()
+        self.canvas_3d.flush_events()
         return
 
     def get_rotated_axis(self, eulers, axis):
@@ -433,7 +424,7 @@ class SimulationController(object):
         self.set_cube_state_client = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         self.sub_imu = rospy.Subscriber('/imu', ImuMsg, callback=self._imu_topic_callback)
         self.sub_mag = rospy.Subscriber('/magnetic', MagneticMessage, callback=self._magnetic_topic_callback)
-        self.plot_rate = rospy.Rate(5)
+        self.plot_rate = rospy.Rate(15)
         self.update_plot_thread = threading.Thread(target = self.update_plot)
         self.update_plot_thread.daemon = True
         self.update_plot_thread.start()
