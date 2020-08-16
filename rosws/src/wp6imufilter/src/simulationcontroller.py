@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 import rospy
 from std_srvs.srv import Empty, EmptyResponse
 from gazebo_msgs.srv import SetModelConfiguration, SetModelConfigurationRequest, SetModelConfigurationResponse, SetModelState
@@ -17,25 +17,53 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 import numpy as np
 
+from kalman.ekf import ekf_ori_estimation as ekf
+import kalman.quaternion_tools as qtools
+
 class ControllerGUI(tk.Frame):
     def __init__(self,controller_node, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
+        self.canvas_x = 14
+        self.canvas_y = 5
         controller_node.GUI = self
         controller_node._pause_physics_client()
 
+        self.plot_frame = tk.Frame(master = self)
         #matplotlib canvas:
         self.handles = []
-        self.mpl_frame = tk.Frame(master = self)
-        self.fig = Figure(figsize=(14, 5), dpi=100)
+        self.mpl_frame = tk.Frame(master = self.plot_frame)
+        self.fig = Figure(figsize=(self.canvas_x, self.canvas_y), dpi=100)
         self.ax = self.fig.add_subplot(111)
-        self.ax.plot([0,0], [0,0])
+        self.ax.set_title('live data from /imu and /magnectic - topics')
         self.ax.set_xlabel('t [s]')
         self.canvas = FigureCanvasTkAgg(self.fig, master = self.mpl_frame)
         self.canvas.draw()
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self.mpl_frame)
         self.toolbar.update()
-        self.mpl_frame.pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
+        # self.mpl_frame.pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
+        self.mpl_frame.grid(row = 0, column = 0)
 
+        #matplotlib 3d canvas:
+        self.handles_3d = []
+        self.mpl_3d_frame = tk.Frame(master = self.plot_frame)
+        self.fig_3d = Figure(figsize=(self.canvas_y, self.canvas_y), dpi=100)
+        self.canvas_3d = FigureCanvasTkAgg(self.fig_3d, master = self.mpl_3d_frame)
+        self.canvas_3d.draw()
+        self.ax_3d = self.fig_3d.add_subplot(111, projection = '3d')
+        self.ax_3d.set_title('estimated position and orientation by EKF')
+        self.ax_3d.set_xlabel('global x')
+        self.ax_3d.set_ylabel('global y')
+        self.ax_3d.set_zlabel('global z')
+        self.ax_3d.set_xlim([-5,5])
+        self.ax_3d.set_ylim([-5,5])
+        self.ax_3d.set_zlim([0,5])
+        self.mpl_3d_frame.grid(row = 0, column = 1)
+        self.x_axis = np.array([1,0,0])*3
+        self.y_axis = np.array([0,1,0])*3
+        self.z_axis = np.array([0,0,1])*3
+
+
+        self.plot_frame.pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
         #setting up checkboxes for the plot
         self.checkbox_frame = tk.Frame(master=self.mpl_frame)
         self.checkbox_var_list = []
@@ -49,6 +77,21 @@ class ControllerGUI(tk.Frame):
                         'mag-x',
                         'mag-y',
                         'mag-z']
+        plot_data = [
+            [[0], [0], 'green', 'angular-vel-x [1/s]'],
+            [[0], [0], 'blue', 'angular-vel-y [1/s]'],
+            [[0], [0], 'cyan', 'angular-vel-x [1/s]'],
+            [[0], [0], 'black', 'linear-acc-x [m/s^2]'],
+            [[0], [0], 'red', 'linear-acc-y [m/s^2]'],
+            [[0], [0], 'orange', 'linear-acc-z [m/s^2]'],
+            [[0], [0], 'magenta', 'mag-x'],
+            [[0], [0], 'orchid', 'mag-y'],
+            [[0], [0], 'darkorchid', 'mag-z']
+        ]
+
+        for pd in plot_data:
+                self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
+
         for i, name in zip(range(0,number_of_plots+1), plot_names):
             self.checkbox_var_list.append(tk.IntVar())
             self.checkbox_var_list[i].set(1)
@@ -148,6 +191,7 @@ class ControllerGUI(tk.Frame):
         self.orientation_frame.pack(fill = tk.BOTH, side = tk.BOTTOM)
 
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.canvas_3d.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.pause_button.pack(fill = tk.BOTH, side = tk.BOTTOM)
         self.unpause_button.pack(fill = tk.BOTH, side = tk.BOTTOM)
         self.reset_button.pack(fill = tk.BOTH, side = tk.BOTTOM)
@@ -155,6 +199,13 @@ class ControllerGUI(tk.Frame):
         self.pack(fill = tk.BOTH)
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
         controller_node._reset_cube()
+        plot_data = [
+            [self.x_axis, 'red', 'x'],
+            [self.y_axis, 'green', 'y'],
+            [self.z_axis, 'blue', 'z'],
+        ]
+        for pd in plot_data:
+            self.handles_3d.append( self.ax_3d.plot( [0,pd[0][0]], [0,pd[0][1]], [0,pd[0][2]], color = pd[1]) )
 
     def on_closing(self):
         rospy.signal_shutdown('GUI was closed, shutting down simulationcontroller node')
@@ -278,29 +329,74 @@ class ControllerGUI(tk.Frame):
             [ts_mag, magy, 'orchid', 'mag-y'],
             [ts_mag, magx, 'darkorchid', 'mag-z']
         ]
-        if self.handles:
-            for handle in self.handles:
-                handle[0].remove()
-        self.handles = []
-        for pd, var in zip(plot_data, self.checkbox_var_list):
+
+        for pd, var, handle in zip(plot_data, self.checkbox_var_list, self.handles):
             if var.get():
-                self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
+                handle[0].visible = True
+                handle[0].set_xdata(pd[0])
+                handle[0].set_ydata(pd[1])
+            else:
+                handle[0].visible = False
+
         self.ax.legend(bbox_to_anchor=(1.04,1), loc="upper left")
         self.ax.set_xlim(xmin = ts_imu[0], xmax = ts_imu[-1])
         self.fig.subplots_adjust(right=0.8, left = 0.05, top = 0.95, bottom = .15)
         self.ax.set_ylim(ymin = -20, ymax = 20)
         self.canvas.draw()
+
+        #EKF filtered orientation/pos plot:
+        eulers = qtools.quat2euler(self.controller_node.quat_pre)
+        x_axis = self.get_rotated_axis(eulers, self.x_axis)
+        y_axis = self.get_rotated_axis(eulers, self.y_axis)
+        z_axis = self.get_rotated_axis(eulers, self.z_axis)
+        axis_list = [x_axis, y_axis, z_axis]
+        # plot_data = [
+        #     [x_axis, 'red', 'x'],
+        #     [y_axis, 'green', 'y'],
+        #     [z_axis, 'blue', 'z'],
+        # ]
+        # if self.handles_3d:
+        #     for handle in self.handles_3d:
+        #         handle[0].remove()
+        # self.handles_3d = []
+        # for pd in plot_data:
+        #     self.handles_3d.append( self.ax_3d.plot( [0,pd[0][0]], [0,pd[0][1]], [0,pd[0][2]], color = pd[1]) )
+        for handle,axis in zip(self.handles_3d, axis_list):
+            handle[0].set_xdata([0, axis[0]])
+            handle[0].set_ydata([0, axis[1]])
+            handle[0].set_3d_properties([0, axis[2]])
+        self.canvas_3d.draw()
         return
-        
+
+    def get_rotated_axis(self, eulers, axis):
+        axis = np.matmul(self.rot_x(eulers[0]), axis)
+        axis = np.matmul(self.rot_y(eulers[1]), axis)
+        axis = np.matmul(self.rot_z(eulers[2]), axis)
+        return axis
+
+    def rot_x(self,phi):
+        '''returns rotational matrix around x, phi in rad'''
+        return np.array([[1,0,0],[0,np.cos(phi),-np.sin(phi)],[0,np.sin(phi),np.cos(phi)]])
+
+    def rot_y(self, beta):
+        '''returns rotational matrix around y, beta in rad'''
+        return np.array([ [np.cos(beta), 0 , np.sin(beta)] , [0,1,0] , [-np.sin(beta), 0, np.cos(beta)] ])
+
+    def rot_z(self,rho):
+        '''returns rotational matrix around z, rho in rad'''
+        return np.array([[np.cos(rho),-np.sin(rho),0],[np.sin(rho),np.cos(rho),0],[0,0,1]])  
+
 class SimulationController(object):
     #Class for simulation control
-    def __init__(self, GUI = None, name='simulationcontroller', objectname='unit_box'):
+    def __init__(self, sensor_rate = 50, GUI = None, name='simulationcontroller', objectname='unit_box'):
         self.name = name
         self.GUI = GUI
         self.objectname = objectname
         self.simulation_paused = True
+        self.quat_pre = [1,0,0,0]
         self.data_list_imu = []
         self.data_list_mag = []
+        self.sensor_rate = sensor_rate
         self.modelstate = ModelState()
         self.modelstate.model_name = 'simple_cube'
         self.modelstate.pose.position.x = 0
@@ -337,7 +433,7 @@ class SimulationController(object):
         self.set_cube_state_client = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         self.sub_imu = rospy.Subscriber('/imu', ImuMsg, callback=self._imu_topic_callback)
         self.sub_mag = rospy.Subscriber('/magnetic', MagneticMessage, callback=self._magnetic_topic_callback)
-        self.plot_rate = rospy.Rate(2)
+        self.plot_rate = rospy.Rate(5)
         self.update_plot_thread = threading.Thread(target = self.update_plot)
         self.update_plot_thread.daemon = True
         self.update_plot_thread.start()
@@ -350,8 +446,23 @@ class SimulationController(object):
             
         
     def _imu_topic_callback(self,data):
-        # rospy.loginfo('Received IMU msg: {0}'.format(data))
         self.data_list_imu.append(data)
+        self.calculate_current_quat()
+
+    def calculate_current_quat(self):
+        if self.data_list_imu and self.data_list_mag:
+            if len(self.data_list_imu) > 1:
+                gyr_pre = self.data_list_imu[-2].angular_velocity
+                gyr_pre = np.array([gyr_pre.x, gyr_pre.y, gyr_pre.z])
+                quat_pre = self.quat_pre
+            else:
+                gyr_pre = np.array([0 ,0, 0])
+                quat_pre = np.array([0,0,0,1])
+            acc = self.data_list_imu[-1].linear_acceleration
+            mag = self.data_list_mag[-1].vector
+            acc = [acc.x, acc.y, acc.z]
+            mag = [mag.x, mag.y, mag.z]
+            self.quat_pre = ekf(self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
 
     def _magnetic_topic_callback(self,data):
         self.data_list_mag.append(data)
