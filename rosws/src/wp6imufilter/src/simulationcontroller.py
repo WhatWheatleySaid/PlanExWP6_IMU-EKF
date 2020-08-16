@@ -23,6 +23,7 @@ import kalman.quaternion_tools as qtools
 class ControllerGUI(tk.Frame):
     def __init__(self,controller_node, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
+        defaultcolor = self.master.cget('bg')
         self.canvas_x = 14
         self.canvas_y = 5
         controller_node.GUI = self
@@ -32,7 +33,8 @@ class ControllerGUI(tk.Frame):
         #matplotlib canvas:
         self.handles = []
         self.mpl_frame = tk.Frame(master = self.plot_frame)
-        self.fig = Figure(figsize=(self.canvas_x, self.canvas_y), dpi=100)
+        self.fig = Figure(figsize=(self.canvas_x, self.canvas_y), dpi=100, facecolor = defaultcolor)
+        self.fig.subplots_adjust(right=0.8, left = 0.05, top = 0.95, bottom = .1)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_title('live data from /imu and /magnectic - topics')
         self.ax.set_xlabel('t [s]')
@@ -46,10 +48,12 @@ class ControllerGUI(tk.Frame):
         #matplotlib 3d canvas:
         self.handles_3d = []
         self.mpl_3d_frame = tk.Frame(master = self.plot_frame)
-        self.fig_3d = Figure(figsize=(self.canvas_y, self.canvas_y), dpi=100)
+        self.fig_3d = Figure(figsize=(self.canvas_y, self.canvas_y), dpi=100, facecolor = defaultcolor)
+        self.fig_3d.subplots_adjust(left = .01, right= 0.99, top = 0.99, bottom = .01)
         self.canvas_3d = FigureCanvasTkAgg(self.fig_3d, master = self.mpl_3d_frame)
         self.canvas_3d.draw()
         self.ax_3d = self.fig_3d.add_subplot(111, projection = '3d')
+        self.ax_3d.set_facecolor(defaultcolor)
         self.ax_3d.set_title('estimated position and orientation by EKF')
         self.ax_3d.set_xlabel('global x')
         self.ax_3d.set_ylabel('global y')
@@ -91,7 +95,9 @@ class ControllerGUI(tk.Frame):
 
         for pd in plot_data:
                 self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
-
+        self.ax.legend(bbox_to_anchor=(1.04,1), loc="upper left")
+        
+        
         for i, name in zip(range(0,number_of_plots+1), plot_names):
             self.checkbox_var_list.append(tk.IntVar())
             self.checkbox_var_list[i].set(1)
@@ -204,6 +210,7 @@ class ControllerGUI(tk.Frame):
             [self.y_axis, 'green', 'y'],
             [self.z_axis, 'blue', 'z'],
         ]
+       
         for pd in plot_data:
             self.handles_3d.append( self.ax_3d.plot( [0,pd[0][0]], [0,pd[0][1]], [0,pd[0][2]], color = pd[1]) )
 
@@ -338,9 +345,7 @@ class ControllerGUI(tk.Frame):
             else:
                 handle[0].set_visible(False)
 
-        self.ax.legend(bbox_to_anchor=(1.04,1), loc="upper left")
         self.ax.set_xlim(xmin = ts_imu[0], xmax = ts_imu[-1])
-        self.fig.subplots_adjust(right=0.8, left = 0.05, top = 0.95, bottom = .15)
         self.ax.set_ylim(ymin = -20, ymax = 20)
         self.canvas.draw()
 
