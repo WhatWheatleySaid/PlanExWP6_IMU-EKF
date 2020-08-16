@@ -63,13 +63,6 @@ class EkfEstimation:
         self.df.gyro_y = self.df.gyro_y - self.ds_gyrbias.gyro_y
         self.df.gyro_z = self.df.gyro_z - self.ds_gyrbias.gyro_z
 
-    def quat2euler(self, quat):
-        alpha = np.arctan2(2 * (quat[0]*quat[3] + quat[1] * quat[2]), 1 - 2 * (quat[2]**2 + quat[3]**2))
-        beta = np.arcsin(2 * quat[0] * quat[2] - quat[3] * quat[1])
-        gamma = np.arctan2(2 * (quat[0]*quat[1] + quat[2] * quat[3]), 1 - 2 * (quat[1]**2 + quat[2]**2))
-
-        return np.array([alpha, beta, gamma])
-
 
     def ekf_wrapper(self):
         n = self.df.acc_x.shape[0]
@@ -77,7 +70,7 @@ class EkfEstimation:
         ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
         ds_mag = self.df[['mag_x', 'mag_y', 'mag_z']].to_numpy()
         quat = np.array([[1, 0, 0, 0]])
-        euler = np.array([self.quat2euler(quat[0])])
+        euler = np.array([qtool.quat2euler(quat[0])])
         quat = np.array([qtool.quaternion_from_accmag(ds_acc[0,], ds_mag[0,]).T])
 
         for i in range(1, ds_gyr.shape[0]):
@@ -86,11 +79,9 @@ class EkfEstimation:
             else:
                 quat_post = ekf_ori_estimation(self.rate, ds_gyr[i-1,], quat[i-1,], ds_acc[i,], ds_mag[i,])
             quat = np.append(quat, [quat_post], axis=0)
-            # euler = np.append(euler, [self.quat2euler(quat_post)], axis=0)
+            # euler = np.append(euler, [qtool.quat2euler(quat_post)], axis=0)
         self.quat = quat
         # self.euler = euler
-        0
-
 
 
     def pos_estimation(self):

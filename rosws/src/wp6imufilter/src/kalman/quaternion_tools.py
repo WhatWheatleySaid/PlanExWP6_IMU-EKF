@@ -26,8 +26,8 @@ def quaternion_from_accmag(acc, mag):
     """
 
     z_earth_imu = acc / norm(acc)
-    x_earth_imu = np.cross(mag, z_earth_imu) / norm(np.cross(mag, z_earth_imu))
-    y_earth_imu = np.cross(z_earth_imu, x_earth_imu) / norm(np.cross(z_earth_imu, x_earth_imu))
+    y_earth_imu = np.cross(z_earth_imu, mag) / norm(np.cross(z_earth_imu, mag))
+    x_earth_imu = np.cross(y_earth_imu, z_earth_imu) / norm(np.cross(y_earth_imu, z_earth_imu))
 
     quat_imu_earth = quaternion_from_rotmat(np.array([x_earth_imu.T, y_earth_imu.T, z_earth_imu.T]))
     return quat_imu_earth
@@ -85,3 +85,11 @@ def quaternion_rotate(q, vec):
 
 def quaternion_invert(q):
     return np.hstack(np.array([q[0], -q[1:]])).flatten()
+
+
+def quat2euler(quat):
+    alpha = np.arctan2(2 * (quat[0]*quat[3] + quat[1] * quat[2]), 1 - 2 * (quat[2]**2 + quat[3]**2))
+    beta = np.arcsin(2 * quat[0] * quat[2] - quat[3] * quat[1])
+    gamma = np.arctan2(2 * (quat[0]*quat[1] + quat[2] * quat[3]), 1 - 2 * (quat[1]**2 + quat[2]**2))
+
+    return np.array([alpha, beta, gamma])
