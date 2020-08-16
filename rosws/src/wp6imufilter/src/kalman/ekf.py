@@ -15,12 +15,12 @@ class EkfEstimation:
 
         self.motion_start = 70
         self.motion_end = 500
-        self.rate = 200
+        self.rate = 50
 
         self.gyro_bias()
 
         # extended kalman filter, orientation estimation
-        self.ekf_ori_estimation()
+        self.ekf_wrapper()
         self.pos_estimation()
 
     def _return(self):
@@ -64,70 +64,78 @@ class EkfEstimation:
         self.df.gyro_y = self.df.gyro_y - self.ds_gyrbias.gyro_y
         self.df.gyro_z = self.df.gyro_z - self.ds_gyrbias.gyro_z
 
-    def ekf_ori_estimation(self):
+    def quat2euler(self, quat):
+        alpha = np.arctan2(2 * (quat[0]*quat[3] + quat[1] * quat[2]), 1 - 2 * (quat[2]**2 + quat[3]**2))
+        beta = np.arcsin(2 * quat[0] * quat[2] - quat[3] * quat[1])
+        gamma = np.arctan2(2 * (quat[0]*quat[1] + quat[2] * quat[3]), 1 - 2 * (quat[1]**2 + quat[2]**2))
+
+        return np.array([alpha, beta, gamma])
+
+
+    def ekf_wrapper(self):
         n = self.df.acc_x.shape[0]
         ds_gyr = self.df[['gyro_x', 'gyro_y', 'gyro_z']].to_numpy()
         ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
         ds_mag = self.df[['mag_x', 'mag_y', 'mag_z']].to_numpy()
-        quat = np.zeros((n, 4))
-        quat[0,] = [1, 0, 0, 0]
+        quat = np.array([[1, 0, 0, 0]])
+        euler = np.array([self.quat2euler(quat[0])])
         # quat[0,] = qtool.quaternion_from_accmag(ds_acc[0,], ds_mag[0,]).T
-        # P = np.eye(4)
-        # V = np.eye(4) * 0.00001
-        # W = np.zeros((6, 6))
-        # W[:3, :3] = np.eye(3) * 0.001
-        # W[3:6, 3:6] = np.eye(3) * 100
 
+        for i in range(1, ds_gyr.shape[0]):
+            if i == 1:
+                quat_post = self.ekf_ori_estimation(self.rate, ds_gyr[i - 1,], quat[0,], ds_acc[i,], ds_mag[i,])
+            else:
+                quat_post = self.ekf_ori_estimation(self.rate, ds_gyr[i-1,], quat[i-1,], ds_acc[i,], ds_mag[i,])
+            quat = np.append(quat, [quat_post], axis=0)
+            euler = np.append(euler, [self.quat2euler(quat_post)], axis=0)
+        self.quat = quat
+        self.euler = euler
+        0
+
+    def ekf_ori_estimation(self, rate, gyr_pre, quat_pre, acc, mag):
         P = np.eye(4)
         V = np.eye(4) * 0.1
         W = np.zeros((6, 6))
-        W[:3, :3] = np.eye(3) * 10e6  # acc uncertanty
-        W[3:6, 3:6] = np.eye(3) * 10e6  # mag uncertanty
+        W[:3, :3] = np.eye(3) * 100000  # acc uncertanty
+        W[3:6, 3:6] = np.eye(3) * 100000  # mag uncertanty
 
+        q_gyr = qtool.quaternion_from_gyr(gyr_pre, rate)
+
+        g1, g2, g3, g4 = q_gyr
         Fx = np.zeros((4, 4))
-        for i in range(1, ds_gyr.shape[0]):
-            q_gyr = qtool.quaternion_from_gyr(ds_gyr[i - 1,], self.rate)
+        Fx[0, :] = [g1, -g2, -g3, -g4]
+        Fx[1, :] = [g2, g1, g4, -g3]
+        Fx[2, :] = [g3, -g4, g1, g2]
+        Fx[3, :] = [g4, g3, -g2, g1]
+        x_hat_pre = qtool.quaternion_multiply(quat_pre, q_gyr).T
+        # compute Hesse matrices
+        q1, q2, q3, q4 = x_hat_pre
+        h1 = np.zeros((3, 4))
+        h2 = np.zeros((3, 4))
+        h1[0, :] = [-q3, q4, -q1, q2]
+        h1[1, :] = [q2, q1, q4, q3]
+        h1[2, :] = [q1, -q2, -q3, q4]
+        h1 = h1 * 2 * 9.8
 
-            g1, g2, g3, g4 = q_gyr
-            Fx[0, :] = [g1, -g2, -g3, -g4]
-            Fx[1, :] = [g2, g1, g4, -g3]
-            Fx[2, :] = [g3, -g4, g1, g2]
-            Fx[3, :] = [g4, g3, -g2, g1]
-            # Fx[0, :] = [0, -ds_gyr[i,0], -ds_gyr[i,1], -ds_gyr[i,2]]
-            # Fx[1, :] = [ds_gyr[i,0], 0, ds_gyr[i,2], -ds_gyr[i,1]]
-            # Fx[2, :] = [ds_gyr[i,1], -ds_gyr[i,2], 0, ds_gyr[i,0]]
-            # Fx[3, :] = [ds_gyr[i,2], ds_gyr[i,1], -ds_gyr[i,0], 0]
-            # q_accmag = qtool.quaternion_from_accmag(ds_acc[i,], ds_mag[i,]).T
-            x_hat_pre = qtool.quaternion_multiply(quat[i - 1,], q_gyr).T
-            # compute Hesse matrices
-            q1, q2, q3, q4 = x_hat_pre
-            h1 = np.zeros((3, 4))
-            h2 = np.zeros((3, 4))
-            h1[0, :] = [-q3, q4, -q1, q2]
-            h1[1, :] = [q2, q1, q4, q3]
-            h1[2, :] = [q1, -q2, -q3, q4]
-            h1 = h1 * 2 * 9.8
+        h2[0, :] = [q4, q3, q2, q1]
+        h2[1, :] = [q1, -q2, q3, -q4]
+        h2[2, :] = [-q2, -q1, q4, q3]
+        hx1 = qtool.quaternion_rotate(qtool.quaternion_invert(x_hat_pre.T), np.array([0, 0, 9.8]))
+        hx2 = qtool.quaternion_rotate(qtool.quaternion_invert(x_hat_pre.T), np.array([0, 1, 0]))
 
-            h2[0, :] = [q4, q3, q2, q1]
-            h2[1, :] = [q1, -q2, q3, -q4]
-            h2[2, :] = [-q2, -q1, q4, q3]
-            hx1 = qtool.quaternion_rotate(qtool.quaternion_invert(x_hat_pre.T), np.array([0, 0, 9.8]))
-            hx2 = qtool.quaternion_rotate(qtool.quaternion_invert(x_hat_pre.T), np.array([0, 1, 0]))
-
-            # EKF algorithm
-            # predition
-            p_pre = Fx * P * Fx.T + V
-            # p_pre = P * Fx * P.T + V
-            H = np.vstack([h1, h2])
-            # kalman gain
-            K = p_pre.dot(H.T).dot(np.linalg.inv(H.dot(p_pre.dot(H.T)) + W))
-            x_hat = x_hat_pre + K.dot((np.vstack([ds_acc[i,], ds_mag[i,]]).flatten() -
-                                       np.vstack([hx1, hx2]).flatten()).T)
-            # update P
-            P = (np.eye(4) - K.dot(H)).dot(p_pre.dot((np.eye(4) - K.dot(H)).T)) + K.dot(W.dot(K.T))
-            # update quat
-            quat[i,] = x_hat.T
-        self.quat = quat
+        # EKF algorithm
+        # predition
+        p_pre = Fx * P * Fx.T + V
+        H = np.vstack([h1, h2])
+        # kalman gain
+        K = p_pre.dot(H.T).dot(np.linalg.inv(H.dot(p_pre.dot(H.T)) + W))
+        x_hat = x_hat_pre + K.dot((np.vstack([acc, mag]).flatten() -
+                                   np.vstack([hx1, hx2]).flatten()).T)
+        # update P
+        P = (np.eye(4) - K.dot(H)).dot(p_pre.dot((np.eye(4) - K.dot(H)).T)) + K.dot(W.dot(K.T))
+        # update quat
+        # quat[i,] = x_hat.T
+        return x_hat.T
 
     def pos_estimation(self):
         # position estimation
@@ -155,8 +163,8 @@ class EkfEstimation:
 
 if __name__ == "__main__":
     fpath = Path("data")
-    fname = "linear_vel2.csv"
-    # fname = "test_data3.csv"
+    # fname = "linear_vel2.csv"
+    fname = "test_data2.csv"
     df = pd.read_csv(fpath / fname, sep="\t")
 
     call = EkfEstimation(df)
