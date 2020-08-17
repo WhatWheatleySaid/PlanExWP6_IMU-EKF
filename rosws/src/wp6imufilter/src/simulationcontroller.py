@@ -15,9 +15,10 @@ import threading
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import axes3d
 import numpy as np
 
-from kalman.ekf import ekf_ori_estimation as ekf
+from kalman.ori_estimation import ekf_ori_estimation as ekf
 import kalman.quaternion_tools as qtools
 
 class ControllerGUI(tk.Frame):
@@ -389,7 +390,10 @@ class SimulationController(object):
         self.GUI = GUI
         self.objectname = objectname
         self.simulation_paused = True
-        self.quat_pre = [1,0,0,0]
+        # ekf inits
+        self.quat_pre = np.array([1,0,0,0])
+        self.P = np.eye(4)
+
         self.data_list_imu = []
         self.data_list_mag = []
         self.sensor_rate = sensor_rate
@@ -443,22 +447,24 @@ class SimulationController(object):
         
     def _imu_topic_callback(self,data):
         self.data_list_imu.append(data)
+        # initialize P
         self.calculate_current_quat()
 
     def calculate_current_quat(self):
         if self.data_list_imu and self.data_list_mag:
+            acc = self.data_list_imu[-1].linear_acceleration
+            mag = self.data_list_mag[-1].vector
+            acc = np.array([acc.x, acc.y, acc.z])
+            mag = np.array([mag.x, mag.y, mag.z])
             if len(self.data_list_imu) > 1:
                 gyr_pre = self.data_list_imu[-2].angular_velocity
                 gyr_pre = np.array([gyr_pre.x, gyr_pre.y, gyr_pre.z])
                 quat_pre = self.quat_pre
             else:
                 gyr_pre = np.array([0 ,0, 0])
-                quat_pre = np.array([0,0,0,1])
-            acc = self.data_list_imu[-1].linear_acceleration
-            mag = self.data_list_mag[-1].vector
-            acc = [acc.x, acc.y, acc.z]
-            mag = [mag.x, mag.y, mag.z]
-            self.quat_pre = ekf(self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
+                quat_pre = np.array([qtools.quaternion_from_accmag(acc, mag).T])
+
+            self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
 
     def _magnetic_topic_callback(self,data):
         self.data_list_mag.append(data)
