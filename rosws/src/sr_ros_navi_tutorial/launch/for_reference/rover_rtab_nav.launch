@@ -1,0 +1,32 @@
+<launch>
+  <!-- Launch file for a standard bear scenario starting
+  the rtabmap node for SLAM and the move_base node for navigation
+
+<arg name = "rgb_topic"              value = "/camFront/rgb/image_raw" />
+<arg name = "depth_registered_topic" value = "/camFront/depth/image_raw" />
+<arg name = "camera_info_topic"      value = "/camFront/rgb/camera_info" />
+   -->
+
+<arg name = "rgb_topic"              value = "/camera/color/image_raw" />
+<arg name = "depth_registered_topic" value = "/camera/depth/image_raw" />
+<arg name = "camera_info_topic"      value = "/camera/color/camera_info" />
+
+<include file="$(find ros-navi-tutorial)/launch/rtab_nav.launch">
+    <arg name = "launch_tf"              value = 'False' />>
+    <arg name = "footprint_frame"        value = "base_footprint" />
+    <arg name = "output_frame"           value = "base_footprint" />
+    <arg name = "topic_pointcloud"       value = "/camera/depth/points" />
+    <arg name = "launch_rtab"            value = "True" />
+    <arg name = "frame_id"               value = "base_footprint" />
+    <arg name = "rtabmap_args"           value = "--delete_db_on_start" />
+    <arg name = "rgb_topic"              value = "$(arg rgb_topic)" />
+    <arg name = "depth_registered_topic" value = "$(arg depth_registered_topic)" />
+    <arg name = "camera_info_topic"      value = "$(arg camera_info_topic)" />
+    <arg name = "compressed"             value = "false"/>
+    <arg name = "odom_topic"             value = "odom" />
+    <arg name = "subscribe_scan"         value = "false" />
+    <arg name = "rtabmapviz"             value = "true" />
+    <arg name = "cmd_topic"              value = "cmd_vel"/>
+    <arg name = "cfg"                    value = "$(find ros-navi-tutorial)/param/rtab_bear.ini"/>
+  </include>
+</launch>

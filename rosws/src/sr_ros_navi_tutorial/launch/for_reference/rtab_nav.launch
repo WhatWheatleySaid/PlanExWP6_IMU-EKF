@@ -1,0 +1,66 @@
+<launch>
+  <!-- Launch file for a standard scenario starting a tf_tree for the rover,
+  obstacle detection from rtabmap obstacles,
+  the rtabmap node for SLAM and the move_base node for navigation-->
+  <arg name = "launch_tf"              default = 'True'/>
+  <arg name = "footprint_frame"        default = "/base_footprint"/>
+  <arg name = "input_topics"           default = "/camera/depth/points" />
+  <arg name = "output_topic"           default = "/merge_clouds/points" />
+  <arg name = "tf_frame"               default = "merge_clouds_frame" />
+  <arg name = "output_frame"           default = "base_footprint" />
+  <arg name = "topic_pointcloud"       default = "/merge_clouds/points" />
+  <arg name = "launch_rtab"            default = 'True'/>
+  <arg name = "frame_id"               default = "base_footprint"/>
+  <arg name = "rtabmap_args"           default = "--delete_db_on_start"/>
+  <arg name = "rgb_topic"              default = "/camera/rgb/image_raw" />
+  <arg name = "depth_registered_topic" default = "/camera/depth/image_raw" />
+  <arg name = "camera_info_topic"      default = "/camera/rgb/camera_info" />
+  <arg name = "odom_topic"             default = "odom"/>
+  <arg name = "subscribe_scan"         default = "true"/>
+  <arg name = "rtabmapviz"             default = "true"/>
+  <arg name = "cmd_topic"              default = "cmd_vel" />
+  <arg name = "map_frame"              default = "map" />
+  <arg name = "cfg"                    default = "" />
+
+  <arg name="compressed"               default="false"/>
+  <arg name="subscribe_scan_cloud"     default="false"/>         <!-- Assuming 3D scan if set -->
+  <arg name="scan_cloud_topic"         default="/camera/depth_registered/points"/>
+
+  <!-- <include file="$(find rover_nav)/launch/tf_tree.launch" if="$(arg launch_tf)">
+    <arg name = "footprint_frame" value= "$(arg footprint_frame)" />
+  </include> -->
+
+  <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+    <arg name="rtabmapviz"              value="$(arg rtabmapviz)" />
+    <arg name="rviz"                    value="false" />
+    <arg name="localization"            value="false"/>
+    <arg name="cfg"                     value="$(arg cfg)" />
+    <arg name="gui_cfg"                 value="~/.ros/rtabmap_gui.ini" />
+    <arg name="rviz_cfg"                value="$(find rtabmap_ros)/launch/config/rgbd.rviz" />
+
+    <arg name="frame_id"                value="$(arg frame_id)"/>
+    <arg name="namespace"               value="rtabmap"/>
+    <arg name="database_path"           value="~/.ros/rtabmap.db"/>
+    <arg name="wait_for_transform"      value="0.2"/>
+    <arg name="rtabmap_args"            value="$(arg rtabmap_args)"/>
+    <arg name="launch_prefix"           value=""/>
+    <arg name="approx_sync"             value="true"/>
+
+    <arg name="rgb_topic"               value="$(arg rgb_topic)" />
+    <arg name="depth_topic"             value="$(arg depth_registered_topic)" />
+    <arg name="camera_info_topic"       value="$(arg camera_info_topic)" />
+    <arg name="compressed"              value="$(arg compressed)"/>
+
+    <arg name="subscribe_scan"          value="false"/>
+    <arg name="scan_topic"              value="/scan"/>
+
+    <arg name="subscribe_scan_cloud"    value="$(arg subscribe_scan_cloud)"/>
+    <arg name="scan_cloud_topic"        value="$(arg scan_cloud_topic)"/>
+
+    <arg name="visual_odometry"         value="true"/>
+    <arg name="odom_topic"              value="$(arg odom_topic)"/>
+    <arg name="odom_frame_id"           value=""/>
+    <arg name="odom_args"               value="$(arg rtabmap_args)"/>
+  </include>
+
+</launch>

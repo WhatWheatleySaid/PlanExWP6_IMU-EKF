@@ -1,0 +1,14 @@
+<launch>
+  <!-- <group if="$(arg open_rviz)"> 
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+          args="-d $(find turtlebot3_navigation)/rviz/turtlebot3_navigation.rviz"/>
+  </group> -->
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher_node"/>
+  <include file="$(find sr_ros_navi_tutorial)/launch/demo_turtlebot_mapping.launch"> </include>
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find sr_ros_navi_tutorial)/rviz/sr-ros-rtabmap.rviz" />
+  <include file="$(find sr_ros_navi_tutorial)/launch/move_base.launch"> </include>
+
+
+
+</launch>
