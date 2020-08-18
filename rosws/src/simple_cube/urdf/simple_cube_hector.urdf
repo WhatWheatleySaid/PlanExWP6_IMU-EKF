@@ -17,7 +17,7 @@
       </geometry>
     </collision>
     <inertial>
-      <mass value="0.001" />
+      <mass value="0.1" />
       <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
     </inertial>
   </link>
@@ -25,8 +25,7 @@
   <gazebo>
     <plugin  name="imu_sensor" filename="libhector_gazebo_ros_imu.so">
       <always_on>true</always_on>
-      <updateRate>50.0</updateRate>
-      <updateRateHZ>50.0</updateRateHZ>
+      <updateRateHZ>100.0</updateRateHZ>
       <bodyName>base_link</bodyName>
       <topicName>imu</topicName>
       <accelOffset>0 0 0</accelOffset>
@@ -45,11 +44,9 @@
     </plugin>
 
 
-    <plugin name="magnetic_senspr" filename="libhector_gazebo_ros_magnetic.so">
-      <updateRate>50.0</updateRate>
-      <updateRateHz>50.0</updateRateHz>
+    <plugin name="magnetic_sensor" filename="libhector_gazebo_ros_magnetic.so">
+      <updateRate>100.0</updateRate>
       <bodyName>base_link</bodyName>
-      <frameId>$(arg base_link_frame)</frameId>
       <topicName>magnetic</topicName>
       <offset>0 0 0</offset>
       <drift>0.0 0.0 0.0</drift>
