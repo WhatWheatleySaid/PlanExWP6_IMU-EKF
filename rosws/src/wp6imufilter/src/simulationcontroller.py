@@ -441,7 +441,7 @@ class SimulationController(object):
         self.set_cube_state_client = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         self.sub_imu = rospy.Subscriber('/imu', ImuMsg, callback=self._imu_topic_callback)
         self.sub_mag = rospy.Subscriber('/magnetic', MagneticMessage, callback=self._magnetic_topic_callback)
-        self.plot_rate = rospy.Rate(5)
+        self.plot_rate = rospy.Rate(10)
         self.update_plot_thread = threading.Thread(target = self.update_plot)
         self.update_plot_thread.daemon = True
         self.update_plot_thread.start()
@@ -510,6 +510,7 @@ class SimulationController(object):
         # z = self.modelstate.pose.orientation.z
         # w = self.modelstate.pose.orientation.w
         # self.quat_pre = np.array([w, x, y, z])
+        self.P = np.eye(4)
         self.quat_pre = np.array([1, 0, 0, 0])
         self.reset_flag = True
         rospy.loginfo('reset request has been sent')
