@@ -385,7 +385,7 @@ class ControllerGUI(tk.Frame):
 
 class SimulationController(object):
     #Class for simulation control
-    def __init__(self, sensor_rate = 50, GUI = None, name='simulationcontroller', objectname='unit_box'):
+    def __init__(self, sensor_rate = 30, GUI = None, name='simulationcontroller', objectname='unit_box'):
         self.name = name
         self.GUI = GUI
         self.objectname = objectname
