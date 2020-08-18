@@ -398,7 +398,7 @@ class SimulationController(object):
         self.data_list_mag = []
         self.sensor_rate = sensor_rate
         self.modelstate = ModelState()
-        self.modelstate.model_name = 'simple_cube'
+        self.modelstate.model_name = 'simple_cube_hector'
         self.modelstate.pose.position.x = 0
         self.modelstate.pose.position.y = 0
         self.modelstate.pose.position.z = 10
@@ -408,7 +408,7 @@ class SimulationController(object):
         self.modelstate.pose.orientation.w = 0
 
         self.resting_modelstate = ModelState()
-        self.resting_modelstate.model_name = 'simple_cube'
+        self.resting_modelstate.model_name = 'simple_cube_hector'
         self.resting_modelstate.pose.position.x = 0
         self.resting_modelstate.pose.position.y = 0
         self.resting_modelstate.pose.position.z = 0
