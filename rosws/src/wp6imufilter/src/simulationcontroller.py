@@ -453,7 +453,7 @@ class SimulationController(object):
                 quat_pre = self.quat_pre
             else:
                 gyr_pre = np.array([0 ,0, 0])
-                quat_pre = np.array([0,0,0,1])
+                quat_pre = np.array([1,0,0,0])
             acc = self.data_list_imu[-1].linear_acceleration
             mag = self.data_list_mag[-1].vector
             acc = [acc.x, acc.y, acc.z]
