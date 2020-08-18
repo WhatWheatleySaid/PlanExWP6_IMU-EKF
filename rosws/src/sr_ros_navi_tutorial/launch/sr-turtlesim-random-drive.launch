@@ -1,0 +1,3 @@
+<launch> 
+    <node type="move_base_interface.py" name="SRRandomDrive" pkg="sr_ros_navi_tutorial"/>
+</launch>

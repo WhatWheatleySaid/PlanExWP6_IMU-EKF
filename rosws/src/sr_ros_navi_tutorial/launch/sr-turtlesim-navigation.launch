@@ -1,0 +1,5 @@
+<launch> 
+    <include file="$(find sr_ros_navi_tutorial)/launch/move_base.launch"> </include>
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find sr_ros_navi_tutorial)/rviz/sr-navi-turtlesim.rviz" />
+    <node type="publish_obstacles.py" name="ObstacleMaker" pkg="sr_ros_navi_tutorial"/>
+</launch>
