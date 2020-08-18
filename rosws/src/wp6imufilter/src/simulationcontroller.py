@@ -213,7 +213,7 @@ class ControllerGUI(tk.Frame):
         ]
        
         for pd in plot_data:
-            self.handles_3d.append( self.ax_3d.plot( [0,pd[0][0]], [0,pd[0][1]], [0,pd[0][2]], color = pd[1]) )
+            self.handles_3d.append( [self.ax_3d.plot( [0,pd[0][0]], [0,pd[0][1]], [0,pd[0][2]], color = pd[1]), self.ax_3d.text(pd[0][0], pd[0][1], pd[0][2], pd[2], color = pd[1])] )
 
     def on_closing(self):
         rospy.signal_shutdown('GUI was closed, shutting down simulationcontroller node')
@@ -357,9 +357,17 @@ class ControllerGUI(tk.Frame):
         z_axis = self.get_rotated_axis(eulers, self.z_axis)
         axis_list = [x_axis, y_axis, z_axis]
         for handle,axis in zip(self.handles_3d, axis_list):
-            handle[0].set_xdata([0, axis[0]])
-            handle[0].set_ydata([0, axis[1]])
-            handle[0].set_3d_properties([0, axis[2]])
+            handle[0][0].set_xdata([0, axis[0]])
+            handle[0][0].set_ydata([0, axis[1]])
+            handle[0][0].set_3d_properties([0, axis[2]])
+
+            '''
+            code snippet from Text3D matplotlib object:
+            self._position3d = np.array((x, y, z))
+            '''
+            handle[1]._position3d = np.array([axis[0], axis[1], axis[2]])
+
+            
         self.canvas_3d.draw()
         self.canvas.flush_events()
         self.canvas_3d.flush_events()
@@ -433,7 +441,7 @@ class SimulationController(object):
         self.set_cube_state_client = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         self.sub_imu = rospy.Subscriber('/imu', ImuMsg, callback=self._imu_topic_callback)
         self.sub_mag = rospy.Subscriber('/magnetic', MagneticMessage, callback=self._magnetic_topic_callback)
-        self.plot_rate = rospy.Rate(15)
+        self.plot_rate = rospy.Rate(5)
         self.update_plot_thread = threading.Thread(target = self.update_plot)
         self.update_plot_thread.daemon = True
         self.update_plot_thread.start()
@@ -497,6 +505,12 @@ class SimulationController(object):
         self.pause_physics_client()
         self.data_list_imu = []
         self.set_cube_state_client(self.modelstate)
+        # x = self.modelstate.pose.orientation.x
+        # y = self.modelstate.pose.orientation.y
+        # z = self.modelstate.pose.orientation.z
+        # w = self.modelstate.pose.orientation.w
+        # self.quat_pre = np.array([w, x, y, z])
+        self.quat_pre = np.array([1, 0, 0, 0])
         self.reset_flag = True
         rospy.loginfo('reset request has been sent')
 
