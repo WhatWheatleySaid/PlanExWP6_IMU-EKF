@@ -89,24 +89,22 @@ class EkfEstimation:
 
     def pos_estimation(self):
         # # position estimation
-        # est_gravity = np.array([0, 0, np.mean(self.df.acc_z[0:self.motion_start])])
-        # ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
-        # ds_acc[:,2] = 0 # can only move on xy-plane
-        # ds_acc_corr = ds_acc
-        # velocity = np.cumsum(ds_acc_corr, axis=0) / self.rate
-        # self.pos_kin = np.cumsum(velocity, axis=0) / self.rate
-        #
+        quat = self.quat
+        est_gravity = np.array([0, 0, np.mean(self.df.acc_z[0:self.motion_start])])
+        ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
+        ds_acc = ds_acc - est_gravity
+        acc_robot_earth = np.array([qtool.quaternion_rotate(quat[i,], ds_acc[i,]) for i in range(quat.shape[0])])
+        velocity = np.cumsum(acc_robot_earth, axis=0) / self.rate
+        self.pos_kin = np.cumsum(velocity, axis=0) / self.rate
 
-        self.pos_kin = qtool.quaternion_rotate(self.quat, np.array([0.1, 0.1, 0]))
+
         # 3D position plot
         fig = plt.figure()
-        axes = plt.axes(projection='3d')
+        axes = plt.axes()
         axes.set_xlabel('x')
         axes.set_ylabel('y')
-        axes.set_zlabel('z')
-        # # sp = axes.scatter3D(start_pt[0], start_pt[1], start_pt[2], 'red')
 
-        line = axes.plot3D(self.pos_kin[:, 0], self.pos_kin[:, 1], self.pos_kin[:, 2], 'green')
+        line = axes.plot(self.pos_kin[:, 0], self.pos_kin[:, 1], 'green')
         plt.axis('equal')
         plt.show()
         0

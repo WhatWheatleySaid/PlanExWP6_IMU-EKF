@@ -2,9 +2,9 @@ from kalman import quaternion_tools as qtool
 import numpy as np
 
 def ekf_ori_estimation(P, rate, gyr_pre, quat_pre, acc, mag):
-    V = np.eye(4) * 0.1
+    V = np.eye(4) * 10
     W = np.zeros((6, 6))
-    W[:3, :3] = np.eye(3) * 10000 # acc uncertainty
+    W[:3, :3] = np.eye(3) * 1000 # acc uncertainty
     W[3:6, 3:6] = np.eye(3) * 100  # mag uncertainty
     # V = np.eye(4) * 0.01
     # W = np.zeros((6, 6))
