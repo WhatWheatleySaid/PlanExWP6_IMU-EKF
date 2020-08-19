@@ -22,12 +22,20 @@
     </inertial>
   </link>
 
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0" rpy="3.141592653 0 1.570796326"/>
+  </joint>
+
+  <link name="imu_link"/>
+
   <gazebo>
     <plugin  name="imu_sensor" filename="libhector_gazebo_ros_imu.so">
       <always_on>true</always_on>
       <updateRate>30.0</updateRate>
       <updateRateHZ>30.0</updateRateHZ>
-      <bodyName>base_link</bodyName>
+      <bodyName>imu_link</bodyName>
       <topicName>imu</topicName>
       <accelOffset>0 0 0</accelOffset>
       <accelDrift>0 0 0</accelDrift>
@@ -48,7 +56,7 @@
     <plugin name="magnetic_sensor" filename="libhector_gazebo_ros_magnetic.so">
       <updateRate>30.0</updateRate>
       <updateRateHZ>30.0</updateRateHZ>
-      <bodyName>base_link</bodyName>
+      <bodyName>imu_link</bodyName>
       <topicName>magnetic</topicName>
       <offset>0 0 0</offset>
       <drift>0.0 0.0 0.0</drift>
