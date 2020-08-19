@@ -88,26 +88,28 @@ class EkfEstimation:
 
 
     def pos_estimation(self):
-        # position estimation
-        est_gravity = np.array([0, 0, np.mean(self.df.acc_z[0:self.motion_start])])
-        ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
-        ds_acc_corr = np.array(
-            [qtool.quaternion_rotate(self.quat[i,], ds_acc[i,]) for i in range(0, self.quat.shape[0])])
-        # no gravity
-        ds_acc_corr = ds_acc_corr - np.ones(ds_acc_corr.shape) * est_gravity
-        velocity = np.cumsum(ds_acc_corr, axis=1) / self.rate
-        self.pos_kin = np.cumsum(velocity, axis=1) / self.rate
+        # # position estimation
+        # est_gravity = np.array([0, 0, np.mean(self.df.acc_z[0:self.motion_start])])
+        # ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
+        # ds_acc[:,2] = 0 # can only move on xy-plane
+        # ds_acc_corr = ds_acc
+        # velocity = np.cumsum(ds_acc_corr, axis=0) / self.rate
+        # self.pos_kin = np.cumsum(velocity, axis=0) / self.rate
+        #
 
+        self.pos_kin = qtool.quaternion_rotate(self.quat, np.array([0.1, 0.1, 0]))
         # 3D position plot
         fig = plt.figure()
         axes = plt.axes(projection='3d')
         axes.set_xlabel('x')
         axes.set_ylabel('y')
         axes.set_zlabel('z')
-        # sp = axes.scatter3D(start_pt[0], start_pt[1], start_pt[2], 'red')
+        # # sp = axes.scatter3D(start_pt[0], start_pt[1], start_pt[2], 'red')
+
         line = axes.plot3D(self.pos_kin[:, 0], self.pos_kin[:, 1], self.pos_kin[:, 2], 'green')
         plt.axis('equal')
         plt.show()
+        0
 
 
 
@@ -116,7 +118,7 @@ if __name__ == "__main__":
     fpath = Path("data")
     # fname = "linear_vel2.csv"
     # fname = "test_data.csv"
-    fname = "no_motion.csv"
+    fname = "turtle1.csv"
     df = pd.read_csv(fpath / fname, sep="\t")
 
     call = EkfEstimation(df)
