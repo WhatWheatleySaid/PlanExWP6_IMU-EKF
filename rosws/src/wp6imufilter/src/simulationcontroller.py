@@ -451,7 +451,6 @@ class SimulationController(object):
             self.plot_rate.sleep()
             if not rospy.is_shutdown() and self.data_list_imu:
                 self.GUI.plot_data(self.data_list_imu, self.data_list_mag)
-            
         
     def _imu_topic_callback(self,data):
         self.data_list_imu.append(data)

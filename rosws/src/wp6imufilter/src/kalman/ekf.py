@@ -7,6 +7,8 @@ from mpl_toolkits import mplot3d
 
 from kalman import quaternion_tools as qtool
 from kalman import ori_estimation
+from kalman import pos_estimation
+
 
 class EkfEstimation:
     def __init__(self, df):
@@ -21,7 +23,19 @@ class EkfEstimation:
 
         # extended kalman filter, orientation estimation
         self.ekf_wrapper()
-        self.pos_estimation()
+        self.pos_kin = pos_estimation.pos_estimation(self.rate, self.quat,
+                                                     self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy())
+
+        # 3D position plot
+        fig = plt.figure()
+        axes = plt.axes()
+        axes.set_xlabel('x')
+        axes.set_ylabel('y')
+
+        line = axes.plot(self.pos_kin[:, 0], self.pos_kin[:, 1], 'green')
+        plt.axis('equal')
+        plt.show()
+        0
 
     def _return(self):
         return self.quat
@@ -39,18 +53,30 @@ class EkfEstimation:
     def cleanup_df(self, df):
         # determine length
         n = df.angular_velocity_x.size
+        # df_clean = pd.DataFrame(data={
+        #     "time": df.time_seconds + df.time_nseconds / 1e9 - df.time_seconds.iloc[0],
+        #     "gyro_x": df.angular_velocity_x,
+        #     "gyro_y": df.angular_velocity_y,
+        #     "gyro_z": df.angular_velocity_z,
+        #     "acc_x": df.linear_acceleration_x,
+        #     "acc_y": df.linear_acceleration_y,
+        #     "acc_z": df.linear_acceleration_z,
+        #     # generate mag data (until simulation data is available)
+        #     "mag_x": df.mag_x,
+        #     "mag_y": df.mag_y,
+        #     "mag_z": df.mag_z})
         df_clean = pd.DataFrame(data={
             "time": df.time_seconds + df.time_nseconds / 1e9 - df.time_seconds.iloc[0],
-            "gyro_x": df.angular_velocity_x,
-            "gyro_y": df.angular_velocity_y,
-            "gyro_z": df.angular_velocity_z,
-            "acc_x": df.linear_acceleration_x,
-            "acc_y": df.linear_acceleration_y,
-            "acc_z": df.linear_acceleration_z,
+            "gyro_x": -df.angular_velocity_y,
+            "gyro_y": -df.angular_velocity_x,
+            "gyro_z": -df.angular_velocity_z,
+            "acc_x": -df.linear_acceleration_y,
+            "acc_y": -df.linear_acceleration_x,
+            "acc_z": -df.linear_acceleration_z,
             # generate mag data (until simulation data is available)
-            "mag_x": df.mag_x,
-            "mag_y": df.mag_y,
-            "mag_z": df.mag_z})
+            "mag_x": -df.mag_y,
+            "mag_y": -df.mag_x,
+            "mag_z": -df.mag_z})
         return df_clean
 
     def gyro_bias(self):
@@ -64,52 +90,28 @@ class EkfEstimation:
         self.df.gyro_y = self.df.gyro_y - self.ds_gyrbias.gyro_y
         self.df.gyro_z = self.df.gyro_z - self.ds_gyrbias.gyro_z
 
-
     def ekf_wrapper(self):
         n = self.df.acc_x.shape[0]
         ds_gyr = self.df[['gyro_x', 'gyro_y', 'gyro_z']].to_numpy()
         ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
         ds_mag = self.df[['mag_x', 'mag_y', 'mag_z']].to_numpy()
-        quat = np.array([[1, 0, 0, 0]])
-        euler = np.array([qtool.quat2euler(quat[0])])
-        quat = np.array([qtool.quaternion_from_accmag(ds_acc[1,], ds_mag[1,]).T]) # sometimes, readings have spikes in pos 0
+        # initial first state from accmag
+        quat = np.array([qtool.quaternion_from_accmag(ds_acc[1,], ds_mag[1,]).T])
+        # euler = np.array([qtool.quat2euler(quat[0])])
 
         for i in range(1, ds_gyr.shape[0]):
             if i == 1:
                 P = np.eye(4)
-                quat_post, P = ori_estimation.ekf_ori_estimation(P, self.rate, ds_gyr[i - 1,], quat[0,], ds_acc[i,], ds_mag[i,])
+                quat_post, P = ori_estimation.ekf_ori_estimation(P, self.rate, ds_gyr[i - 1,], quat[0,], ds_acc[i,],
+                                                                 ds_mag[i,])
             else:
-                quat_post, P = ori_estimation.ekf_ori_estimation(P, self.rate, ds_gyr[i-1,], quat[i-1,], ds_acc[i,], ds_mag[i,])
+                quat_post, P = ori_estimation.ekf_ori_estimation(P, self.rate, ds_gyr[i - 1,], quat[i - 1,], ds_acc[i,],
+                                                                 ds_mag[i,])
             quat = np.append(quat, [quat_post], axis=0)
             # euler = np.append(euler, [qtool.quat2euler(quat_post)], axis=0)
         self.quat = quat
         0
         # self.euler = euler
-
-
-    def pos_estimation(self):
-        # # position estimation
-        quat = self.quat
-        est_gravity = np.array([0, 0, np.mean(self.df.acc_z[0:self.motion_start])])
-        ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
-        ds_acc = ds_acc - est_gravity
-        acc_robot_earth = np.array([qtool.quaternion_rotate(quat[i,], ds_acc[i,]) for i in range(quat.shape[0])])
-        velocity = np.cumsum(acc_robot_earth, axis=0) / self.rate
-        self.pos_kin = np.cumsum(velocity, axis=0) / self.rate
-
-
-        # 3D position plot
-        fig = plt.figure()
-        axes = plt.axes()
-        axes.set_xlabel('x')
-        axes.set_ylabel('y')
-
-        line = axes.plot(self.pos_kin[:, 0], self.pos_kin[:, 1], 'green')
-        plt.axis('equal')
-        plt.show()
-        0
-
-
 
 
 if __name__ == "__main__":

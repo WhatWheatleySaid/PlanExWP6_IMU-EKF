@@ -2,14 +2,14 @@ from kalman import quaternion_tools as qtool
 import numpy as np
 
 def ekf_ori_estimation(P, rate, gyr_pre, quat_pre, acc, mag):
-    V = np.eye(4) * 10
-    W = np.zeros((6, 6))
-    W[:3, :3] = np.eye(3) * 1000 # acc uncertainty
-    W[3:6, 3:6] = np.eye(3) * 100  # mag uncertainty
-    # V = np.eye(4) * 0.01
+    # V = np.eye(4) * 10
     # W = np.zeros((6, 6))
-    # W[:3, :3] = np.eye(3) * 100000  # acc uncertainty
+    # W[:3, :3] = np.eye(3) * 1000 # acc uncertainty
     # W[3:6, 3:6] = np.eye(3) * 100  # mag uncertainty
+    V = np.eye(4) * 0.01
+    W = np.zeros((6, 6))
+    W[:3, :3] = np.eye(3) * 100000  # acc uncertainty
+    W[3:6, 3:6] = np.eye(3) * 100  # mag uncertainty
 
     q_gyr = qtool.quaternion_from_gyr(gyr_pre, rate)
 
@@ -46,5 +46,4 @@ def ekf_ori_estimation(P, rate, gyr_pre, quat_pre, acc, mag):
     # update P
     P = (np.eye(4) - K.dot(H)).dot(p_pre.dot((np.eye(4) - K.dot(H)).T)) + K.dot(W.dot(K.T))
     # update quat
-    # quat[i,] = x_hat.T
     return np.array(x_hat.T), P
