@@ -29,8 +29,8 @@ class ControllerGUI(tk.Frame):
     def __init__(self,controller_node, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
         defaultcolor = self.master.cget('bg')
-        self.canvas_x = 14
-        self.canvas_y = 5
+        self.canvas_x = 9
+        self.canvas_y = 4
         controller_node.GUI = self
         controller_node._pause_physics_client()
 
@@ -39,7 +39,7 @@ class ControllerGUI(tk.Frame):
         self.handles = []
         self.mpl_frame = tk.Frame(master = self.plot_frame)
         self.fig = Figure(figsize=(self.canvas_x, self.canvas_y), dpi=100, facecolor = defaultcolor)
-        self.fig.subplots_adjust(right=0.8, left = 0.05, top = 0.95, bottom = .1)
+        self.fig.subplots_adjust(right=0.8, left = 0.07, top = 0.93, bottom = .11)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_title('live data from /imu and /magnectic - topics')
         self.ax.set_xlabel('t [s]')
@@ -52,8 +52,8 @@ class ControllerGUI(tk.Frame):
 
         #matplotlib 3d canvas:
         self.handles_3d = []
-        self.mpl_3d_frame = tk.Frame(master = self.plot_frame)
-        self.fig_3d = Figure(figsize=(self.canvas_y, self.canvas_y), dpi=100, facecolor = defaultcolor)
+        self.mpl_3d_frame = tk.Frame(master = self)
+        self.fig_3d = Figure(figsize=(2*self.canvas_y, self.canvas_y), dpi=100, facecolor = defaultcolor)
         self.fig_3d.subplots_adjust(left = .01, right= 0.99, top = 0.99, bottom = .01)
         self.canvas_3d = FigureCanvasTkAgg(self.fig_3d, master = self.mpl_3d_frame)
         self.canvas_3d.draw()
@@ -66,7 +66,8 @@ class ControllerGUI(tk.Frame):
         self.ax_3d.set_xlim([-5,5])
         self.ax_3d.set_ylim([-5,5])
         self.ax_3d.set_zlim([0,5])
-        self.mpl_3d_frame.grid(row = 0, column = 1)
+        # self.mpl_3d_frame.grid(row = 0, column = 1)
+        self.mpl_3d_frame.pack(side = tk.RIGHT, fill = tk.BOTH, expand = 1)
         self.x_axis = np.array([1,0,0])*3
         self.y_axis = np.array([0,1,0])*3
         self.z_axis = np.array([0,0,1])*3
@@ -88,12 +89,12 @@ class ControllerGUI(tk.Frame):
                         'mag-y',
                         'mag-z']
         plot_data = [
-            [[0], [0], 'green', 'angular-vel-x [1/s]'],
-            [[0], [0], 'blue', 'angular-vel-y [1/s]'],
-            [[0], [0], 'cyan', 'angular-vel-x [1/s]'],
-            [[0], [0], 'black', 'linear-acc-x [m/s^2]'],
-            [[0], [0], 'red', 'linear-acc-y [m/s^2]'],
-            [[0], [0], 'orange', 'linear-acc-z [m/s^2]'],
+            [[0], [0], 'green', 'angular-vel-x\n[1/s]'],
+            [[0], [0], 'blue', 'angular-vel-y\n[1/s]'],
+            [[0], [0], 'cyan', 'angular-vel-x\n[1/s]'],
+            [[0], [0], 'black', 'linear-acc-x\n[m/s^2]'],
+            [[0], [0], 'red', 'linear-acc-y\n[m/s^2]'],
+            [[0], [0], 'orange', 'linear-acc-z\n[m/s^2]'],
             [[0], [0], 'magenta', 'mag-x'],
             [[0], [0], 'orchid', 'mag-y'],
             [[0], [0], 'darkorchid', 'mag-z']
@@ -101,7 +102,7 @@ class ControllerGUI(tk.Frame):
 
         for pd in plot_data:
                 self.handles.append(self.ax.plot(pd[0],pd[1],color = pd[2], linestyle = '-', label = pd[3]))
-        self.ax.legend(bbox_to_anchor=(1.04,1), loc="upper left")
+        self.ax.legend(bbox_to_anchor=(1.001,1), loc="upper left")
         
         
         for i, name in zip(range(0,number_of_plots+1), plot_names):
@@ -112,8 +113,8 @@ class ControllerGUI(tk.Frame):
 
 
         self.controller_node = controller_node
-        self.pause_button = tk.Button(master = self, text='pause', command = self.controller_node._pause_physics_client)
-        self.unpause_button = tk.Button(master = self, text='unpause', command = self.controller_node._unpause_physics_client)
+        self.pause_button = tk.Button(master = self, text='pause', command = self.send_pause_request)
+        self.unpause_button = tk.Button(master = self, text='unpause', command = self.send_unpause_request)
         self.reset_button = tk.Button(master = self, text='reset', command = self.reset_model_object)
         self.save_button = tk.Button(master = self, text='save to .CSV', command = self.save_data)
     
@@ -230,6 +231,13 @@ class ControllerGUI(tk.Frame):
     def on_closing(self):
         rospy.signal_shutdown('GUI was closed, shutting down simulationcontroller node')
         self.master.destroy()
+
+    def send_pause_request(self):
+        self.ax_3d.mouse_init()
+        self.controller_node._pause_physics_client()
+    def send_unpause_request(self):
+        self.ax_3d.disable_mouse_rotation()
+        self.controller_node._unpause_physics_client()
 
     def _checkbox_callback(self):
         if self.controller_node.data_list_imu and self.controller_node.simulation_paused:
@@ -377,7 +385,7 @@ class ControllerGUI(tk.Frame):
                 handle[0].set_visible(False)
 
         self.ax.set_xlim(xmin = ts_imu[0], xmax = ts_imu[-1])
-        self.ax.set_ylim(ymin = -20, ymax = 20)
+        self.ax.set_ylim(ymin = -5, ymax = 11)
         self.canvas.draw()
 
         #EKF filtered orientation/pos plot:
@@ -524,7 +532,6 @@ class SimulationController(object):
                     gyr_pre = np.array([gyr_pre.x, gyr_pre.y, gyr_pre.z])
                     if self.current_index == 0:
                         self.quat_pre = np.array(qtools.quaternion_from_accmag(acc, mag).T)
-                        print(self.quat_pre) 
                     #update:
                     self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, self.quat_pre, acc, mag)
                     self.pos , self.vel = pos_estimation(self.sensor_rate, self.quat_pre, acc, self.vel, self.pos)
