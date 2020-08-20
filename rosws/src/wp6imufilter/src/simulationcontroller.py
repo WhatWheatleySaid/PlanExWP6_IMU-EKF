@@ -20,6 +20,7 @@ import numpy as np
 
 from kalman.ori_estimation import ekf_ori_estimation as ekf
 import kalman.quaternion_tools as qtools
+from kalman.pos_estimation import pos_estimation
 
 class ControllerGUI(tk.Frame):
     def __init__(self,controller_node, *args, **kwargs):
@@ -355,17 +356,20 @@ class ControllerGUI(tk.Frame):
         x_axis = self.get_rotated_axis(eulers, self.x_axis)
         y_axis = self.get_rotated_axis(eulers, self.y_axis)
         z_axis = self.get_rotated_axis(eulers, self.z_axis)
+        x_offset = self.controller_node.pos[0]
+        y_offset = self.controller_node.pos[1]
+        z_offset = self.controller_node.pos[2]
         axis_list = [x_axis, y_axis, z_axis]
         for handle,axis in zip(self.handles_3d, axis_list):
-            handle[0][0].set_xdata([0, axis[0]])
-            handle[0][0].set_ydata([0, axis[1]])
-            handle[0][0].set_3d_properties([0, axis[2]])
+            handle[0][0].set_xdata([0, axis[0] + x_offset])
+            handle[0][0].set_ydata([0, axis[1] + y_offset])
+            handle[0][0].set_3d_properties([0, axis[2] + z_offset])
 
             '''
             code snippet from Text3D matplotlib object:
             self._position3d = np.array((x, y, z))
             '''
-            handle[1]._position3d = np.array([axis[0], axis[1], axis[2]])
+            handle[1]._position3d = np.array([axis[0] + x_offset, axis[1] + y_offset, axis[2] + z_offset])
 
             
         self.canvas_3d.draw()
@@ -400,6 +404,7 @@ class SimulationController(object):
         self.simulation_paused = True
         # ekf inits
         self.quat_pre = np.array([1,0,0,0])
+        self.pos = np.ndarray([3,1])
         self.P = np.eye(4)
 
         self.data_list_imu = []
@@ -472,6 +477,7 @@ class SimulationController(object):
                 quat_pre = np.array([qtools.quaternion_from_accmag(acc, mag).T])
 
             self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
+            self.pos = pos_estimation(self.sensor_rate, self.quat_pre, acc)
 
     def _magnetic_topic_callback(self,data):
         self.data_list_mag.append(data)
