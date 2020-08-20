@@ -103,6 +103,57 @@ def quaternion_invert(q):
     assert q.shape == (4,)
     return np.array([q[0], -q[1], -q[2], -q[3]])
 
+def vec_rotate_x(alph, vec):
+    """
+    Rotate around x axis with given angle (alph).
+
+    :param alph: angle in rad
+    :type alph: float
+    :param vec: the vector that should be rotated
+    :type vec: ndarray(3,)
+    :return: rotated vector
+    :rtype: ndarray(3,)
+    """
+
+    rotmat = np.array([[1, 0, 0],
+                       [0, np.cos(alph), -np.sin(alph)],
+                       [0, np.sin(alph), np.cos(alph)]])
+    return rotmat.dot(vec)
+
+def vec_rotate_y(alph, vec):
+    """
+    Rotate around y axis with given angle (alph).
+
+    :param alph: angle in rad
+    :type alph: float
+    :param vec: the vector that should be rotated
+    :type vec: ndarray(3,)
+    :return: rotated vector
+    :rtype: ndarray(3,)
+    """
+
+    rotmat = np.array([[np.cos(alph), 0, np.sin(alph)],
+                       [0, 1, 0],
+                       [-np.sin(alph), 0, np.cos(alph)]])
+    return rotmat.dot(vec)
+
+def vec_rotate_z(alph, vec):
+    """
+    Rotate around z axis with given angle (alph).
+
+    :param alph: angle in rad
+    :type alph: float
+    :param vec: the vector that should be rotated
+    :type vec: ndarray(3,)
+    :return: rotated vector
+    :rtype: ndarray(3,)
+    """
+
+    rotmat = np.array([[np.cos(alph), -np.sin(alph), 0],
+                       [np.sin(alph), np.cos(alph), 0],
+                       [0, 0, 1]])
+    return rotmat.dot(vec)
+
 
 def quat2euler(quat):
     assert quat.shape == (4,)

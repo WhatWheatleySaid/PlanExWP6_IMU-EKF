@@ -26,8 +26,6 @@ class EkfEstimation:
 
         self.pos_wrapper()
 
-
-
     def _return(self):
         return self.quat
 
@@ -44,30 +42,19 @@ class EkfEstimation:
     def cleanup_df(self, df):
         # determine length
         n = df.angular_velocity_x.size
-        # df_clean = pd.DataFrame(data={
-        #     "time": df.time_seconds + df.time_nseconds / 1e9 - df.time_seconds.iloc[0],
-        #     "gyro_x": df.angular_velocity_x,
-        #     "gyro_y": df.angular_velocity_y,
-        #     "gyro_z": df.angular_velocity_z,
-        #     "acc_x": df.linear_acceleration_x,
-        #     "acc_y": df.linear_acceleration_y,
-        #     "acc_z": df.linear_acceleration_z,
-        #     # generate mag data (until simulation data is available)
-        #     "mag_x": df.mag_x,
-        #     "mag_y": df.mag_y,
-        #     "mag_z": df.mag_z})
         df_clean = pd.DataFrame(data={
             "time": df.time_seconds + df.time_nseconds / 1e9 - df.time_seconds.iloc[0],
-            "gyro_x": -df.angular_velocity_y,
-            "gyro_y": -df.angular_velocity_x,
-            "gyro_z": -df.angular_velocity_z,
-            "acc_x": -df.linear_acceleration_y,
-            "acc_y": -df.linear_acceleration_x,
-            "acc_z": -df.linear_acceleration_z,
+            "gyro_x": df.angular_velocity_x,
+            "gyro_y": df.angular_velocity_y,
+            "gyro_z": df.angular_velocity_z,
+            "acc_x": df.linear_acceleration_x,
+            "acc_y": df.linear_acceleration_y,
+            "acc_z": df.linear_acceleration_z,
             # generate mag data (until simulation data is available)
-            "mag_x": -df.mag_y,
-            "mag_y": -df.mag_x,
-            "mag_z": -df.mag_z})
+            "mag_x": df.mag_x,
+            "mag_y": df.mag_y,
+            "mag_z": df.mag_z})
+
         return df_clean
 
     def gyro_bias(self):
@@ -87,7 +74,11 @@ class EkfEstimation:
         ds_acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
         ds_mag = self.df[['mag_x', 'mag_y', 'mag_z']].to_numpy()
         # initial first state from accmag
-        quat = np.array([qtool.quaternion_from_accmag(ds_acc[1,], ds_mag[1,]).T])
+
+        # gyr_pre = qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, ds_acc[1,]))
+        quat = np.array([qtool.quaternion_from_accmag(
+            qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, ds_acc[1,])),
+            qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, ds_mag[1,]))).T])
         # euler = np.array([qtool.quat2euler(quat[0])])
 
         for i in range(1, ds_gyr.shape[0]):
@@ -111,7 +102,7 @@ class EkfEstimation:
         vel_sum = np.array([0, 0, 0])
         pos_sum = np.array([0, 0, 0])
         for i in range(self.quat.shape[0]):
-            pos_sum, vel_sum = pos_estimation.pos_estimation(self.rate, self.quat[i,], acc[i, ], vel_sum, pos_sum)
+            pos_sum, vel_sum = pos_estimation.pos_estimation(self.rate, self.quat[i,], acc[i,], vel_sum, pos_sum)
             vel_list.append(vel_sum)
             pos_list.append(pos_sum)
         vel_list = np.array(vel_list)
@@ -128,6 +119,7 @@ class EkfEstimation:
         plt.axis('equal')
         plt.show()
         0
+
 
 if __name__ == "__main__":
     fpath = Path("data")
