@@ -12,6 +12,7 @@ def pos_estimation(rate, quat, acc, vel_sum, pos_sum):
     :type ds_acc: ndarray
     :return:
     """
+    acc = qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, acc))
     acc = acc + [0, 0, 9.8]
     # if quat.shape[0] == 1:
     acc_robot_earth = qtool.quaternion_rotate(quat, acc)
