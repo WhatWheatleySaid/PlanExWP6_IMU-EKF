@@ -559,16 +559,17 @@ class SimulationController(object):
         self.path = []
         self.data_list_mag = []
         self.current_index = 0
+        self.P = np.eye(4)
+        self.quat_pre = np.array([1, 0, 0, 0])
+        self.pos = np.array([0, 0, 0])
+        self.vel = self.pos
         self.set_cube_state_client(self.modelstate)
         # x = self.modelstate.pose.orientation.x
         # y = self.modelstate.pose.orientation.y
         # z = self.modelstate.pose.orientation.z
         # w = self.modelstate.pose.orientation.w
         # self.quat_pre = np.array([w, x, y, z])
-        self.P = np.eye(4)
-        self.quat_pre = np.array([1, 0, 0, 0])
-        self.pos = np.array([0, 0, 0])
-        self.vel = self.pos
+        
         self.reset_flag = True
         rospy.loginfo('reset request has been sent')
 
