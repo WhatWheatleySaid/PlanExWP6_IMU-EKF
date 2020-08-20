@@ -369,16 +369,16 @@ class ControllerGUI(tk.Frame):
         x_offset = self.controller_node.pos[0]
         y_offset = self.controller_node.pos[1]
         z_offset = self.controller_node.pos[2]
-        # self.path.append([x_offset, y_offset, z_offset])
-        # if len(self.path) > 30:
-        #     #limit the length of the path
-        #     self.path.pop(0)
-        path_x = [xyz[0] for xyz in self.controller_node.path]
-        path_y = [xyz[1] for xyz in self.controller_node.path]
-        path_z = [xyz[2] for xyz in self.controller_node.path]
-        max_x = np.amax(path_x)
-        max_y = np.amax(path_y)
-        max_z = np.amax(path_z)
+        self.path.append([x_offset, y_offset, z_offset])
+        if len(self.path) > 50:
+            #limit the length of the path
+            self.path.pop(0)
+        path_x = [xyz[0] for xyz in self.path]
+        path_y = [xyz[1] for xyz in self.path]
+        path_z = [xyz[2] for xyz in self.path]
+        max_x = np.amax(np.abs(path_x))
+        max_y = np.amax(np.abs(path_y))
+        max_z = np.amax(np.abs(path_z))
         max_val = np.amax([max_x, max_y,max_z])
         axis_list = [x_axis, y_axis, z_axis]
         for handle,axis in zip(self.handles_3d, axis_list):
@@ -505,9 +505,9 @@ class SimulationController(object):
                 quat_pre = np.array([qtools.quaternion_from_accmag(acc, mag).T])
             self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
             self.pos , self.vel = pos_estimation(self.sensor_rate, quat_pre, acc, self.vel, self.pos)
-            self.path.append(self.pos)
-            if len(self.path) > 200:
-                self.path.pop(0)
+            # self.path.append(self.pos)
+            # if len(self.path) > 200:
+            #     self.path.pop(0)
 
     def _magnetic_topic_callback(self,data):
         self.data_list_mag.append(data)
