@@ -54,7 +54,7 @@ class ControllerGUI(tk.Frame):
         self.fig_3d.subplots_adjust(left = .01, right= 0.99, top = 0.99, bottom = .01)
         self.canvas_3d = FigureCanvasTkAgg(self.fig_3d, master = self.mpl_3d_frame)
         self.canvas_3d.draw()
-        self.ax_3d = self.fig_3d.add_subplot(111, projection = '3d')
+        self.ax_3d = self.fig_3d.add_subplot(111, projection = '3d', proj_type = 'ortho')
         self.ax_3d.set_facecolor(defaultcolor)
         self.ax_3d.set_title('estimated position and orientation by EKF')
         self.ax_3d.set_xlabel('global x')
@@ -233,6 +233,7 @@ class ControllerGUI(tk.Frame):
             self.plot_data(self.controller_node.data_list_imu, self.controller_node.data_list_mag)
             
     def reset_cube(self):
+        self.path = []
         self._set_cube_state()
         self.controller_node._reset_cube()
 
@@ -434,7 +435,7 @@ class SimulationController(object):
         self.vel = self.pos
         self.P = np.eye(4)
         self.path = []
-
+        self.current_index = 0
         self.data_list_imu = []
         self.data_list_mag = []
         self.sensor_rate = sensor_rate
@@ -475,9 +476,45 @@ class SimulationController(object):
         self.sub_imu = rospy.Subscriber('/imu', ImuMsg, callback=self._imu_topic_callback)
         self.sub_mag = rospy.Subscriber('/magnetic', MagneticMessage, callback=self._magnetic_topic_callback)
         self.plot_rate = rospy.Rate(10)
+        self.calculation_rate = rospy.Rate(self.sensor_rate)
+        self.calculation_thread = threading.Thread(target = self.calculate_orientation_and_position)
+        self.calculation_thread.daemon = True
+        self.calculation_thread.start()
         self.update_plot_thread = threading.Thread(target = self.update_plot)
         self.update_plot_thread.daemon = True
         self.update_plot_thread.start()
+
+    def calculate_orientation_and_position(self):
+        '''
+        function to synchronised the calculation of the EKF and to avoid that the IMU is ahead of the Mag
+        or the other way around
+        '''
+        while not rospy.is_shutdown():
+            self.calculation_rate.sleep()
+            if self.data_list_mag and self.data_list_mag:
+                len_imu = len(self.data_list_imu)
+                len_mag = len(self.data_list_mag)
+                if self.current_index >= len_mag or self.current_index >= len_imu:
+                    #imu or mag could not be read yet, try on next itteration
+                    continue
+                else:
+                    #calculate and update orientation + position
+                    acc = self.data_list_imu[self.current_index].linear_acceleration
+                    mag = self.data_list_mag[self.current_index].vector
+                    acc = np.array([acc.x, acc.y, acc.z])
+                    mag = np.array([mag.x, mag.y, mag.z])
+                    gyr_pre = self.data_list_imu[self.current_index-1].angular_velocity
+                    gyr_pre = np.array([gyr_pre.x, gyr_pre.y, gyr_pre.z])
+                    if self.current_index == 0:
+                        self.quat_pre = np.array(qtools.quaternion_from_accmag(acc, mag).T)
+                        print(self.quat_pre) 
+                    #update:
+                    self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, self.quat_pre, acc, mag)
+                    self.pos , self.vel = pos_estimation(self.sensor_rate, self.quat_pre, acc, self.vel, self.pos)
+                    #continue to next index:
+                    self.current_index = self.current_index + 1           
+
+                
 
     def update_plot(self):
         while not rospy.is_shutdown():
@@ -487,27 +524,6 @@ class SimulationController(object):
         
     def _imu_topic_callback(self,data):
         self.data_list_imu.append(data)
-        # initialize P
-        self.calculate_current_quat()
-
-    def calculate_current_quat(self):
-        if self.data_list_imu and self.data_list_mag:
-            acc = self.data_list_imu[-1].linear_acceleration
-            mag = self.data_list_mag[-1].vector
-            acc = np.array([acc.x, acc.y, acc.z])
-            mag = np.array([mag.x, mag.y, mag.z])
-            if len(self.data_list_imu) > 1:
-                gyr_pre = self.data_list_imu[-2].angular_velocity
-                gyr_pre = np.array([gyr_pre.x, gyr_pre.y, gyr_pre.z])
-                quat_pre = self.quat_pre
-            else:
-                gyr_pre = np.array([0 ,0, 0])
-                quat_pre = np.array([qtools.quaternion_from_accmag(acc, mag).T])
-            self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
-            self.pos , self.vel = pos_estimation(self.sensor_rate, quat_pre, acc, self.vel, self.pos)
-            # self.path.append(self.pos)
-            # if len(self.path) > 200:
-            #     self.path.pop(0)
 
     def _magnetic_topic_callback(self,data):
         self.data_list_mag.append(data)
@@ -542,6 +558,7 @@ class SimulationController(object):
         self.data_list_imu = []
         self.path = []
         self.data_list_mag = []
+        self.current_index = 0
         self.set_cube_state_client(self.modelstate)
         # x = self.modelstate.pose.orientation.x
         # y = self.modelstate.pose.orientation.y
