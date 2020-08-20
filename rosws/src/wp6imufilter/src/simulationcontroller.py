@@ -67,6 +67,7 @@ class ControllerGUI(tk.Frame):
         self.x_axis = np.array([1,0,0])*3
         self.y_axis = np.array([0,1,0])*3
         self.z_axis = np.array([0,0,1])*3
+        self.path = []
 
 
         self.plot_frame.pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
@@ -215,6 +216,7 @@ class ControllerGUI(tk.Frame):
        
         for pd in plot_data:
             self.handles_3d.append( [self.ax_3d.plot( [0,pd[0][0]], [0,pd[0][1]], [0,pd[0][2]], color = pd[1]), self.ax_3d.text(pd[0][0], pd[0][1], pd[0][2], pd[2], color = pd[1])] )
+        self.path_handle = self.ax_3d.plot( [0,0], [0,0], [0,0], color = 'black')
 
     def on_closing(self):
         rospy.signal_shutdown('GUI was closed, shutting down simulationcontroller node')
@@ -359,19 +361,30 @@ class ControllerGUI(tk.Frame):
         x_offset = self.controller_node.pos[0]
         y_offset = self.controller_node.pos[1]
         z_offset = self.controller_node.pos[2]
+        self.path.append([x_offset, y_offset, z_offset])
+        if len(self.path) > 30:
+            #limit the length of the path
+            self.path.pop(0)
+        path_x = [xyz[0] for xyz in self.path]
+        path_y = [xyz[1] for xyz in self.path]
+        path_z = [xyz[2] for xyz in self.path]
         axis_list = [x_axis, y_axis, z_axis]
         for handle,axis in zip(self.handles_3d, axis_list):
-            handle[0][0].set_xdata([0, axis[0] + x_offset])
-            handle[0][0].set_ydata([0, axis[1] + y_offset])
-            handle[0][0].set_3d_properties([0, axis[2] + z_offset])
+            handle[0][0].set_xdata([x_offset, axis[0] + x_offset])
+            handle[0][0].set_ydata([y_offset, axis[1] + y_offset])
+            handle[0][0].set_3d_properties([z_offset, axis[2] + z_offset])
 
             '''
             code snippet from Text3D matplotlib object:
             self._position3d = np.array((x, y, z))
             '''
             handle[1]._position3d = np.array([axis[0] + x_offset, axis[1] + y_offset, axis[2] + z_offset])
-
-            
+        self.path_handle[0].set_xdata(path_x)
+        self.path_handle[0].set_ydata(path_y)
+        self.path_handle[0].set_3d_properties(path_z)
+        self.ax_3d.set_xlim([-10 + x_offset, 10 + x_offset])
+        self.ax_3d.set_ylim([-10 + y_offset, 10 + y_offset])
+        self.ax_3d.set_zlim([0 + z_offset, 20 + z_offset])
         self.canvas_3d.draw()
         self.canvas.flush_events()
         self.canvas_3d.flush_events()
@@ -404,7 +417,8 @@ class SimulationController(object):
         self.simulation_paused = True
         # ekf inits
         self.quat_pre = np.array([1,0,0,0])
-        self.pos = np.ndarray([3,1])
+        self.pos = np.array([0, 0, 0])
+        self.vel = self.pos
         self.P = np.eye(4)
 
         self.data_list_imu = []
@@ -475,9 +489,8 @@ class SimulationController(object):
             else:
                 gyr_pre = np.array([0 ,0, 0])
                 quat_pre = np.array([qtools.quaternion_from_accmag(acc, mag).T])
-
             self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
-            self.pos = pos_estimation(self.sensor_rate, self.quat_pre, acc)
+            self.pos , self.vel = pos_estimation(self.sensor_rate, self.quat_pre, acc, self.vel, self.pos)
 
     def _magnetic_topic_callback(self,data):
         self.data_list_mag.append(data)
@@ -517,6 +530,8 @@ class SimulationController(object):
         # self.quat_pre = np.array([w, x, y, z])
         self.P = np.eye(4)
         self.quat_pre = np.array([1, 0, 0, 0])
+        self.pos = np.array([0, 0, 0])
+        self.vel = self.pos
         self.reset_flag = True
         rospy.loginfo('reset request has been sent')
 
