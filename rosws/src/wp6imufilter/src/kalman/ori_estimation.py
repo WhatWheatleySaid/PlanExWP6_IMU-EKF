@@ -4,17 +4,17 @@ import numpy as np
 def ekf_ori_estimation(P, rate, gyr_pre, quat_pre, acc, mag):
 
     # rotate sensor inputs
-    gyr_pre = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, gyr_pre))
-    acc = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, acc))
-    mag = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, mag))
+    # gyr_pre = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, gyr_pre))
+    # acc = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, acc))
+    # mag = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, mag))
 
     # V = np.eye(4) * 10
     # W = np.zeros((6, 6))
     # W[:3, :3] = np.eye(3) * 1000 # acc uncertainty
     # W[3:6, 3:6] = np.eye(3) * 100  # mag uncertainty
-    V = np.eye(4) * 0.01
+    V = np.eye(4) * 10
     W = np.zeros((6, 6))
-    W[:3, :3] = np.eye(3) * 100000  # acc uncertainty
+    W[:3, :3] = np.eye(3) * 1000  # acc uncertainty
     W[3:6, 3:6] = np.eye(3) * 100  # mag uncertainty
 
     q_gyr = qtool.quaternion_from_gyr(gyr_pre, rate)

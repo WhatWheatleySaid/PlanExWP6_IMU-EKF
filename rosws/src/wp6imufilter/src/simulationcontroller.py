@@ -500,11 +500,17 @@ class SimulationController(object):
                 gyr_pre = self.data_list_imu[-2].angular_velocity
                 gyr_pre = np.array([gyr_pre.x, gyr_pre.y, gyr_pre.z])
                 quat_pre = self.quat_pre
+                vel = self.vel
+                pos = self.pos
+                vel[2] = 0
+                pos[2] = 0
             else:
                 gyr_pre = np.array([0 ,0, 0])
+                vel = np.array([0 ,0, 0])
+                pos = np.array([0 ,0, 0])
                 quat_pre = np.array([qtools.quaternion_from_accmag(acc, mag).T])
-            self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
-            self.pos , self.vel = pos_estimation(self.sensor_rate, quat_pre, acc, self.vel, self.pos)
+            self.quat_pre, self.P = ekf(self.P, self.sensor_rate, gyr_pre, quat_pre, acc, mag)
+            self.pos, self.vel = pos_estimation(self.sensor_rate, quat_pre, acc, vel, pos)
             self.path.append(self.pos)
             if len(self.path) > 200:
                 self.path.pop(0)
