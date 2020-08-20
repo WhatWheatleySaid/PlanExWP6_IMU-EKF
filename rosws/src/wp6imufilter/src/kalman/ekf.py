@@ -23,19 +23,10 @@ class EkfEstimation:
 
         # extended kalman filter, orientation estimation
         self.ekf_wrapper()
-        self.pos_kin = pos_estimation.pos_estimation(self.rate, self.quat,
-                                                     self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy())
 
-        # 3D position plot
-        fig = plt.figure()
-        axes = plt.axes()
-        axes.set_xlabel('x')
-        axes.set_ylabel('y')
+        self.pos_wrapper()
 
-        line = axes.plot(self.pos_kin[:, 0], self.pos_kin[:, 1], 'green')
-        plt.axis('equal')
-        plt.show()
-        0
+
 
     def _return(self):
         return self.quat
@@ -113,6 +104,30 @@ class EkfEstimation:
         0
         # self.euler = euler
 
+    def pos_wrapper(self):
+        acc = self.df[['acc_x', 'acc_y', 'acc_z']].to_numpy()
+        vel_list = []
+        pos_list = []
+        vel_sum = np.array([0, 0, 0])
+        pos_sum = np.array([0, 0, 0])
+        for i in range(self.quat.shape[0]):
+            pos_sum, vel_sum = pos_estimation.pos_estimation(self.rate, self.quat[i,], acc[i, ], vel_sum, pos_sum)
+            vel_list.append(vel_sum)
+            pos_list.append(pos_sum)
+        vel_list = np.array(vel_list)
+        pos_list = np.array(pos_list)
+
+        # plot
+        # 3D position plot
+        fig = plt.figure()
+        axes = plt.axes()
+        axes.set_xlabel('x')
+        axes.set_ylabel('y')
+
+        line = axes.plot(pos_list[:, 0], pos_list[:, 1], 'green')
+        plt.axis('equal')
+        plt.show()
+        0
 
 if __name__ == "__main__":
     fpath = Path("data")
