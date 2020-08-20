@@ -23,6 +23,9 @@ import kalman.quaternion_tools as qtools
 from kalman.pos_estimation import pos_estimation
 
 class ControllerGUI(tk.Frame):
+    '''
+    GUI frame to contain every GUI element of the Simulation Controller
+    '''
     def __init__(self,controller_node, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
         defaultcolor = self.master.cget('bg')
@@ -111,7 +114,7 @@ class ControllerGUI(tk.Frame):
         self.controller_node = controller_node
         self.pause_button = tk.Button(master = self, text='pause', command = self.controller_node._pause_physics_client)
         self.unpause_button = tk.Button(master = self, text='unpause', command = self.controller_node._unpause_physics_client)
-        self.reset_button = tk.Button(master = self, text='reset', command = self.reset_cube)
+        self.reset_button = tk.Button(master = self, text='reset', command = self.reset_model_object)
         self.save_button = tk.Button(master = self, text='save to .CSV', command = self.save_data)
     
         #tkinter variables:
@@ -213,7 +216,7 @@ class ControllerGUI(tk.Frame):
         self.save_button.pack(fill = tk.BOTH, side = tk.BOTTOM)
         self.pack(fill = tk.BOTH)
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
-        controller_node._reset_cube()
+        controller_node._reset_model_object()
         plot_data = [
             [self.x_axis, 'red', 'x'],
             [self.y_axis, 'green', 'y'],
@@ -232,12 +235,12 @@ class ControllerGUI(tk.Frame):
         if self.controller_node.data_list_imu and self.controller_node.simulation_paused:
             self.plot_data(self.controller_node.data_list_imu, self.controller_node.data_list_mag)
             
-    def reset_cube(self):
+    def reset_model_object(self):
         self.path = []
-        self._set_cube_state()
-        self.controller_node._reset_cube()
+        self._set_model_state()
+        self.controller_node._reset_model_object()
 
-    def _set_cube_state(self):
+    def _set_model_state(self):
         try:
             self.controller_node.modelstate.pose.position.x = float(self.x_pos_var.get())
             self.controller_node.modelstate.pose.position.y = float(self.y_pos_var.get())
@@ -254,10 +257,10 @@ class ControllerGUI(tk.Frame):
             self.controller_node.modelstate.twist.linear.z = float(self.z_linv_var.get())
             self.controller_node.modelstate.model_name = self.model_name_var.get()
         except:
-            messagebox.showerror('Error', 'Setting cube state failed! Check if your inputs are valid floatingpoint numbers! Setting default values.')
+            messagebox.showerror('Error', 'Setting object state failed! Check if your inputs are valid floatingpoint numbers! Setting default values.')
             self.controller_node.modelstate.pose.position.x = 0
             self.controller_node.modelstate.pose.position.y = 0
-            self.controller_node.modelstate.pose.position.z = 10
+            self.controller_node.modelstate.pose.position.z = 0
             self.controller_node.modelstate.pose.orientation.x = 0
             self.controller_node.modelstate.pose.orientation.y = 0
             self.controller_node.modelstate.pose.orientation.z = 0
@@ -272,6 +275,10 @@ class ControllerGUI(tk.Frame):
 
 
     def save_data(self):
+        '''
+        saves IMU and mag data currently inside the data lists into a csv.
+        Opens a prompt for a directory
+        '''
         dir = tkFileDialog.asksaveasfilename(title = 'select place to save', defaultextension = '.csv')
         if dir != '' and dir != None:
            
@@ -310,6 +317,17 @@ class ControllerGUI(tk.Frame):
                 print('done')
 
     def plot_data(self,data_list_imu, data_list_mag):
+        '''
+        plots the data on the 2d and 3d matplotlib canvas
+        parameters:
+        data_list_imu:
+            type - python list
+            contains IMU message objects ordered by time of reception
+        data_list_mag:
+            type - python list
+            contains mag message objcets ordered by time of reception
+            
+        '''
         lax = []
         lay = []
         laz = []
@@ -371,7 +389,7 @@ class ControllerGUI(tk.Frame):
         y_offset = self.controller_node.pos[1]
         z_offset = self.controller_node.pos[2]
         self.path.append([x_offset, y_offset, z_offset])
-        if len(self.path) > 50:
+        if len(self.path) > 30:
             #limit the length of the path
             self.path.pop(0)
         path_x = [xyz[0] for xyz in self.path]
@@ -405,9 +423,9 @@ class ControllerGUI(tk.Frame):
         return
 
     def get_rotated_axis(self, eulers, axis):
-        axis = np.matmul(self.rot_x(eulers[0]), axis)
+        axis = np.matmul(self.rot_x(eulers[2]), axis)
         axis = np.matmul(self.rot_y(eulers[1]), axis)
-        axis = np.matmul(self.rot_z(eulers[2]), axis)
+        axis = np.matmul(self.rot_z(eulers[0]), axis)
         return axis
 
     def rot_x(self,phi):
@@ -460,19 +478,18 @@ class SimulationController(object):
         self.resting_modelstate.pose.orientation.w = 0
         rospy.init_node(self.name)
 
-        self.reset_flag = True
         #wait for services to be available
-        rospy.loginfo('waiting for /gazebo/pause_physics service... (start gazebo via "roslaunch simple_cube_gazebo simple_cube_hector_world.launch")')
+        rospy.loginfo('waiting for /gazebo/pause_physics service...')
         rospy.wait_for_service('/gazebo/pause_physics')
         rospy.loginfo('The service \'/gazebo/pause_physics\' has been found')
 
-        rospy.loginfo('waiting for /gazebo/set_model_state service... (start gazebo via "roslaunch simple_cube_gazebo simple_cube_hector_world.launch")')
+        rospy.loginfo('waiting for /gazebo/set_model_state service...')
         rospy.wait_for_service('/gazebo/set_model_state')
         rospy.loginfo('The service \'/gazebo/set_model_state\' has been found')
 
         self.pause_physics_client = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.unpause_physics_client = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
-        self.set_cube_state_client = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+        self.set_object_state_client = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         self.sub_imu = rospy.Subscriber('/imu', ImuMsg, callback=self._imu_topic_callback)
         self.sub_mag = rospy.Subscriber('/magnetic', MagneticMessage, callback=self._magnetic_topic_callback)
         self.plot_rate = rospy.Rate(10)
@@ -517,6 +534,9 @@ class SimulationController(object):
                 
 
     def update_plot(self):
+        '''
+        function run in a thread to update the plot peridocially
+        '''
         while not rospy.is_shutdown():
             self.plot_rate.sleep()
             if not rospy.is_shutdown() and self.data_list_imu:
@@ -534,25 +554,19 @@ class SimulationController(object):
         rospy.loginfo('Pause request has been sent')
     
     def _unpause_physics_client(self):
-        if self.reset_flag:
-            self.reset_flag = False
-            # self.set_cube_state_client(self.resting_modelstate)
-            # self.unpause_physics_client()
-            # self.GUI.master.after(1500, self._set_state)
-            self._set_state()
         self.simulation_paused = False
         self.unpause_physics_client()
         rospy.loginfo('Unpause request has been sent')
 
     def _set_resting_state(self):
-        self.set_cube_state_client(self.resting_modelstate)
+        self.set_object_state_client(self.resting_modelstate)
 
     def _set_state(self):
-        self.set_cube_state_client(self.modelstate)
+        self.set_object_state_client(self.modelstate)
 
-    def _reset_cube(self):
+    def _reset_model_object(self):
         '''
-        resets the cubes position and empties gathered data list
+        resets the model objects position and empties gathered data list
         '''
         self.pause_physics_client()
         self.data_list_imu = []
@@ -563,14 +577,12 @@ class SimulationController(object):
         self.quat_pre = np.array([1, 0, 0, 0])
         self.pos = np.array([0, 0, 0])
         self.vel = self.pos
-        self.set_cube_state_client(self.modelstate)
+        self.set_object_state_client(self.modelstate)
         # x = self.modelstate.pose.orientation.x
         # y = self.modelstate.pose.orientation.y
         # z = self.modelstate.pose.orientation.z
         # w = self.modelstate.pose.orientation.w
         # self.quat_pre = np.array([w, x, y, z])
-        
-        self.reset_flag = True
         rospy.loginfo('reset request has been sent')
 
 
