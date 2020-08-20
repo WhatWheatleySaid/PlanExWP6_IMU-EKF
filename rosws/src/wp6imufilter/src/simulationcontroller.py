@@ -144,6 +144,12 @@ class ControllerGUI(tk.Frame):
         self.z_linv_var = tk.StringVar()
         self.z_linv_var.set('0')
 
+        self.model_name_var = tk.StringVar()
+        self.model_name_var.set(controller_node.modelstate.model_name)
+        #modelname entry
+        self.modelname_frame = tk.LabelFrame(master = self, text = 'modelname')
+        tk.Entry(self.modelname_frame, textvariable = self.model_name_var).pack(fill = tk.BOTH, side = tk.BOTTOM)
+        self.modelname_frame.pack(fill = tk.BOTH, side = tk.BOTTOM)
         #position frame and entries/labels:
         self.position_frame = tk.LabelFrame(master = self, text = 'position')
         tk.Label(master = self.position_frame, text = '\tx: ').grid(column = 0, row = 0)
@@ -245,6 +251,7 @@ class ControllerGUI(tk.Frame):
             self.controller_node.modelstate.twist.linear.x = float(self.x_linv_var.get())
             self.controller_node.modelstate.twist.linear.y = float(self.y_linv_var.get())
             self.controller_node.modelstate.twist.linear.z = float(self.z_linv_var.get())
+            self.controller_node.modelstate.model_name = self.model_name_var.get()
         except:
             messagebox.showerror('Error', 'Setting cube state failed! Check if your inputs are valid floatingpoint numbers! Setting default values.')
             self.controller_node.modelstate.pose.position.x = 0
@@ -260,6 +267,7 @@ class ControllerGUI(tk.Frame):
             self.controller_node.modelstate.twist.linear.x = 0
             self.controller_node.modelstate.twist.linear.y = 0
             self.controller_node.modelstate.twist.linear.z = 0
+            self.controller_node.modelstate.model_name = self.model_name_var.get()
 
 
     def save_data(self):
