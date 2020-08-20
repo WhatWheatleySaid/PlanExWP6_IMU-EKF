@@ -120,7 +120,7 @@ class ControllerGUI(tk.Frame):
         self.y_pos_var = tk.StringVar()
         self.y_pos_var.set('0')
         self.z_pos_var = tk.StringVar()
-        self.z_pos_var.set('10')
+        self.z_pos_var.set('0')
         self.x_ori_var = tk.StringVar()
         self.x_ori_var.set('0')
         self.y_ori_var = tk.StringVar()
@@ -439,17 +439,17 @@ class SimulationController(object):
         self.data_list_mag = []
         self.sensor_rate = sensor_rate
         self.modelstate = ModelState()
-        self.modelstate.model_name = 'simple_cube_hector'
+        self.modelstate.model_name = 'turtlebot3_burger'
         self.modelstate.pose.position.x = 0
         self.modelstate.pose.position.y = 0
-        self.modelstate.pose.position.z = 10
+        self.modelstate.pose.position.z = 0
         self.modelstate.pose.orientation.x = 0
         self.modelstate.pose.orientation.y = 0
         self.modelstate.pose.orientation.z = 0
         self.modelstate.pose.orientation.w = 0
 
         self.resting_modelstate = ModelState()
-        self.resting_modelstate.model_name = 'simple_cube_hector'
+        self.resting_modelstate.model_name = 'turtlebot3_burger'
         self.resting_modelstate.pose.position.x = 0
         self.resting_modelstate.pose.position.y = 0
         self.resting_modelstate.pose.position.z = 0
@@ -520,9 +520,10 @@ class SimulationController(object):
     def _unpause_physics_client(self):
         if self.reset_flag:
             self.reset_flag = False
-            self.set_cube_state_client(self.resting_modelstate)
-            self.unpause_physics_client()
-            self.GUI.master.after(1500, self._set_state)
+            # self.set_cube_state_client(self.resting_modelstate)
+            # self.unpause_physics_client()
+            # self.GUI.master.after(1500, self._set_state)
+            self._set_state()
         self.simulation_paused = False
         self.unpause_physics_client()
         rospy.loginfo('Unpause request has been sent')
