@@ -368,23 +368,28 @@ class ControllerGUI(tk.Frame):
         path_x = [xyz[0] for xyz in self.path]
         path_y = [xyz[1] for xyz in self.path]
         path_z = [xyz[2] for xyz in self.path]
+        max_x = np.amax(path_x)
+        max_y = np.amax(path_y)
+        max_z = np.amax(path_z)
+        max_val = np.amax([max_x, max_y,max_z])
         axis_list = [x_axis, y_axis, z_axis]
         for handle,axis in zip(self.handles_3d, axis_list):
-            handle[0][0].set_xdata([x_offset, axis[0] + x_offset])
-            handle[0][0].set_ydata([y_offset, axis[1] + y_offset])
-            handle[0][0].set_3d_properties([z_offset, axis[2] + z_offset])
+            plot_axis = axis * max_val/10
+            handle[0][0].set_xdata([x_offset, plot_axis[0] + x_offset])
+            handle[0][0].set_ydata([y_offset, plot_axis[1] + y_offset])
+            handle[0][0].set_3d_properties([z_offset, plot_axis[2] + z_offset])
 
             '''
             code snippet from Text3D matplotlib object:
             self._position3d = np.array((x, y, z))
             '''
-            handle[1]._position3d = np.array([axis[0] + x_offset, axis[1] + y_offset, axis[2] + z_offset])
+            handle[1]._position3d = np.array([plot_axis[0] + x_offset, plot_axis[1] + y_offset, plot_axis[2] + z_offset])
         self.path_handle[0].set_xdata(path_x)
         self.path_handle[0].set_ydata(path_y)
         self.path_handle[0].set_3d_properties(path_z)
-        self.ax_3d.set_xlim([-10 + x_offset, 10 + x_offset])
-        self.ax_3d.set_ylim([-10 + y_offset, 10 + y_offset])
-        self.ax_3d.set_zlim([0 + z_offset, 20 + z_offset])
+        self.ax_3d.set_xlim([-max_val + x_offset, max_val + x_offset])
+        self.ax_3d.set_ylim([-max_val + y_offset, max_val + y_offset])
+        self.ax_3d.set_zlim([0 + z_offset, 2*max_val + z_offset])
         self.canvas_3d.draw()
         self.canvas.flush_events()
         self.canvas_3d.flush_events()
