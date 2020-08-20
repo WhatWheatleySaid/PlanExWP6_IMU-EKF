@@ -369,13 +369,13 @@ class ControllerGUI(tk.Frame):
         x_offset = self.controller_node.pos[0]
         y_offset = self.controller_node.pos[1]
         z_offset = self.controller_node.pos[2]
-        self.path.append([x_offset, y_offset, z_offset])
-        if len(self.path) > 30:
-            #limit the length of the path
-            self.path.pop(0)
-        path_x = [xyz[0] for xyz in self.path]
-        path_y = [xyz[1] for xyz in self.path]
-        path_z = [xyz[2] for xyz in self.path]
+        # self.path.append([x_offset, y_offset, z_offset])
+        # if len(self.path) > 30:
+        #     #limit the length of the path
+        #     self.path.pop(0)
+        path_x = [xyz[0] for xyz in self.controller_node.path]
+        path_y = [xyz[1] for xyz in self.controller_node.path]
+        path_z = [xyz[2] for xyz in self.controller_node.path]
         max_x = np.amax(path_x)
         max_y = np.amax(path_y)
         max_z = np.amax(path_z)
@@ -423,7 +423,7 @@ class ControllerGUI(tk.Frame):
 
 class SimulationController(object):
     #Class for simulation control
-    def __init__(self, sensor_rate = 30, GUI = None, name='simulationcontroller', objectname='unit_box'):
+    def __init__(self, sensor_rate = 50, GUI = None, name='simulationcontroller', objectname='unit_box'):
         self.name = name
         self.GUI = GUI
         self.objectname = objectname
@@ -433,6 +433,7 @@ class SimulationController(object):
         self.pos = np.array([0, 0, 0])
         self.vel = self.pos
         self.P = np.eye(4)
+        self.path = []
 
         self.data_list_imu = []
         self.data_list_mag = []
@@ -503,7 +504,10 @@ class SimulationController(object):
                 gyr_pre = np.array([0 ,0, 0])
                 quat_pre = np.array([qtools.quaternion_from_accmag(acc, mag).T])
             self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, quat_pre, acc, mag)
-            self.pos , self.vel = pos_estimation(self.sensor_rate, self.quat_pre, acc, self.vel, self.pos)
+            self.pos , self.vel = pos_estimation(self.sensor_rate, quat_pre, acc, self.vel, self.pos)
+            self.path.append(self.pos)
+            if len(self.path) > 200:
+                self.path.pop(0)
 
     def _magnetic_topic_callback(self,data):
         self.data_list_mag.append(data)
@@ -535,6 +539,8 @@ class SimulationController(object):
         '''
         self.pause_physics_client()
         self.data_list_imu = []
+        self.path = []
+        self.data_list_mag = []
         self.set_cube_state_client(self.modelstate)
         # x = self.modelstate.pose.orientation.x
         # y = self.modelstate.pose.orientation.y
