@@ -29,11 +29,11 @@ def quaternion_from_accmag(acc, mag):
     assert acc.shape == (3,)
     assert mag.shape == (3,)
     z_earth_imu = acc / norm(acc)
-    # y_earth_imu = np.cross(z_earth_imu, mag) / norm(np.cross(z_earth_imu, mag))
-    # x_earth_imu = np.cross(y_earth_imu, z_earth_imu) / norm(np.cross(y_earth_imu, z_earth_imu))
-
-    x_earth_imu = np.cross(mag, z_earth_imu) / norm(np.cross(mag, z_earth_imu))
-    y_earth_imu = np.cross(z_earth_imu, x_earth_imu) / norm(np.cross(z_earth_imu, x_earth_imu))
+    y_earth_imu = np.cross(z_earth_imu, mag) / norm(np.cross(z_earth_imu, mag))
+    x_earth_imu = np.cross(y_earth_imu, z_earth_imu) / norm(np.cross(y_earth_imu, z_earth_imu))
+    #
+    # x_earth_imu = np.cross(mag, z_earth_imu) / norm(np.cross(mag, z_earth_imu))
+    # y_earth_imu = np.cross(z_earth_imu, x_earth_imu) / norm(np.cross(z_earth_imu, x_earth_imu))
 
     quat_imu_earth = quaternion_from_rotmat(np.array([x_earth_imu.T, y_earth_imu.T, z_earth_imu.T]))
 

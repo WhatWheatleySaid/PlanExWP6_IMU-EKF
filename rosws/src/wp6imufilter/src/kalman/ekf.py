@@ -75,10 +75,10 @@ class EkfEstimation:
         ds_mag = self.df[['mag_x', 'mag_y', 'mag_z']].to_numpy()
         # initial first state from accmag
 
-        # gyr_pre = qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, ds_acc[1,]))
-        quat = np.array([qtool.quaternion_from_accmag(
-            qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, ds_acc[1,])),
-            qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, ds_mag[1,]))).T])
+        quat = np.array([qtool.quaternion_from_accmag(ds_acc[1,], ds_mag[1,]).T])
+        # quat = np.array([qtool.quaternion_from_accmag(
+        #     qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, ds_acc[1,])),
+        #     qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, ds_mag[1,]))).T])
         # euler = np.array([qtool.quat2euler(quat[0])])
 
         for i in range(1, ds_gyr.shape[0]):
@@ -101,8 +101,10 @@ class EkfEstimation:
         pos_list = []
         vel_sum = np.array([0, 0, 0])
         pos_sum = np.array([0, 0, 0])
-        for i in range(self.quat.shape[0]):
-            pos_sum, vel_sum = pos_estimation.pos_estimation(self.rate, self.quat[i,], acc[i,], vel_sum, pos_sum)
+        quat = self.quat
+        # quat = self.real_quat.drop("time",axis=1).to_numpy()
+        for i in range(quat.shape[0]):
+            pos_sum, vel_sum = pos_estimation.pos_estimation(self.rate, quat[i,], acc[i,], vel_sum, pos_sum)
             vel_list.append(vel_sum)
             pos_list.append(pos_sum)
         vel_list = np.array(vel_list)
@@ -125,7 +127,7 @@ if __name__ == "__main__":
     fpath = Path("data")
     # fname = "linear_vel2.csv"
     # fname = "test_data.csv"
-    fname = "turtle1.csv"
+    fname = "turtle2.csv"
     df = pd.read_csv(fpath / fname, sep="\t")
 
     call = EkfEstimation(df)
