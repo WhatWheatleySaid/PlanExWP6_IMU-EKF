@@ -120,9 +120,9 @@ class ControllerGUI(tk.Frame):
             [[0], [0], 'black', 'linear-acc-x ' + r'$[\frac{m}{s^2}]$'],
             [[0], [0], 'red', 'linear-acc-y ' + r'$[\frac{m}{s^2}]$'],
             [[0], [0], 'orange', 'linear-acc-z ' + r'$[\frac{m}{s^2}]$'],
-            [[0], [0], 'magenta', 'mag-x ' + r'$[\mu$T$]$'],
-            [[0], [0], 'orchid', 'mag-y ' + r'$[\mu$T$]$'],
-            [[0], [0], 'darkorchid', 'mag-z ' + r'$[\mu$T$]$']
+            [[0], [0], 'magenta', 'mag-x ' + r'$[nT]$'],
+            [[0], [0], 'orchid', 'mag-y ' + r'$[nT]$'],
+            [[0], [0], 'darkorchid', 'mag-z ' + r'$[nT]$']
         ]
 
         for pd in plot_data:
