@@ -7,6 +7,9 @@ def ekf_ori_estimation(P, rate, gyr_pre, quat_pre, acc, mag):
     # gyr_pre = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, gyr_pre))
     # acc = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, acc))
     # mag = qtool.vec_rotate_z(np.pi/2, qtool.vec_rotate_x(np.pi, mag))
+    gyr_pre = qtool.vec_rotate_z(np.pi, gyr_pre)
+    acc = qtool.vec_rotate_z(np.pi, acc)
+    mag = qtool.vec_rotate_z(np.pi, mag)
 
     # V = np.eye(4) * 10
     # W = np.zeros((6, 6))

@@ -13,9 +13,10 @@ def pos_estimation(rate, quat, acc, vel_sum, pos_sum):
     :return:
     """
     # acc = qtool.vec_rotate_z(np.pi / 2, qtool.vec_rotate_x(np.pi, acc))
+    acc = qtool.vec_rotate_z(np.pi, acc)
 
-    # acc = acc - [0, 0, 9.8]
-    acc = np.array([1, 0, 0]) # real acc data are not constant at all
+    acc = acc - [0, 0, 9.8]
+    # acc = np.array([1, 0, 0]) # real acc data are not constant at all
     quat[1] = 0
     quat[2] = 0
     acc_robot_earth = qtool.quaternion_rotate(quat, acc)
