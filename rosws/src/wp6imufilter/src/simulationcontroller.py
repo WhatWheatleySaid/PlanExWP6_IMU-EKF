@@ -398,7 +398,7 @@ class ControllerGUI(tk.Frame):
             [ts_imu, laz, 'orange', 'linear-acc-z [m/s^2]'],
             [ts_mag, magx, 'magenta', 'mag-x'],
             [ts_mag, magy, 'orchid', 'mag-y'],
-            [ts_mag, magx, 'darkorchid', 'mag-z']
+            [ts_mag, magz, 'darkorchid', 'mag-z']
         ]
 
         for pd, var, handle in zip(plot_data, self.checkbox_var_list, self.handles):
