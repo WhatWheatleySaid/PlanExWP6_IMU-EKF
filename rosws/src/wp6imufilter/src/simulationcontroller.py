@@ -114,15 +114,15 @@ class ControllerGUI(tk.Frame):
                         'mag-y',
                         'mag-z']
         plot_data = [
-            [[0], [0], 'green', 'angular-vel-x\n[1/s]'],
-            [[0], [0], 'blue', 'angular-vel-y\n[1/s]'],
-            [[0], [0], 'cyan', 'angular-vel-x\n[1/s]'],
-            [[0], [0], 'black', 'linear-acc-x\n[m/s^2]'],
-            [[0], [0], 'red', 'linear-acc-y\n[m/s^2]'],
-            [[0], [0], 'orange', 'linear-acc-z\n[m/s^2]'],
-            [[0], [0], 'magenta', 'mag-x'],
-            [[0], [0], 'orchid', 'mag-y'],
-            [[0], [0], 'darkorchid', 'mag-z']
+            [[0], [0], 'green', 'angular-vel-x ' + r'$[\frac{1}{s}]$'],
+            [[0], [0], 'blue', 'angular-vel-y ' + r'$[\frac{1}{s}]$'],
+            [[0], [0], 'cyan', 'angular-vel-x ' + r'$[\frac{1}{s}]$'],
+            [[0], [0], 'black', 'linear-acc-x ' + r'$[\frac{m}{s^2}]$'],
+            [[0], [0], 'red', 'linear-acc-y ' + r'$[\frac{m}{s^2}]$'],
+            [[0], [0], 'orange', 'linear-acc-z ' + r'$[\frac{m}{s^2}]$'],
+            [[0], [0], 'magenta', 'mag-x ' + r'$[\mu$T$]$'],
+            [[0], [0], 'orchid', 'mag-y ' + r'$[\mu$T$]$'],
+            [[0], [0], 'darkorchid', 'mag-z ' + r'$[\mu$T$]$']
         ]
 
         for pd in plot_data:
