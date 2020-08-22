@@ -1,5 +1,5 @@
 # PlanExWP6_IMU-EKF
-Code produced as part of the Technical University Summer Semester 2020 Course "Planetary Exploration and Space Robotics"
+Code produced as part of the Technical University Berlin Summer Semester 2020 Course "Planetary Exploration and Space Robotics"
 
 # Usage
 This code is intented to be run on Ubuntu.
