@@ -17,6 +17,9 @@ sudo apt-get install ros-melodic-joint-state-publisher-gui
 sudo apt-get install ros-melodic-hector-gazebo-pugins
 sudo apt install ros-melodic-turtlebot3-description
 sudo apt install ros-melodic-turtlebot3-gazebo
+pip2 install matplotlib
+pip2 install numpy
+pip2 install pandas
 ~~~
 
 ### Execution steps
