@@ -1,3 +1,13 @@
+"""
+Work Package 6 - IMU Filtering
+Authors: G. Liang, A. Bauer, N. Meyners, L. Mueller
+Course: PlanEx SoSe 20
+License: MIT
+
+Description:
+Contains multiple functions for quaternion operations, transformations and rotations.
+"""
+
 import numpy as np
 from numpy.linalg import norm
 import math as math
@@ -31,7 +41,7 @@ def quaternion_from_accmag(acc, mag):
     z_earth_imu = acc / norm(acc)
     y_earth_imu = np.cross(z_earth_imu, mag) / norm(np.cross(z_earth_imu, mag))
     x_earth_imu = np.cross(y_earth_imu, z_earth_imu) / norm(np.cross(y_earth_imu, z_earth_imu))
-    #
+
     # x_earth_imu = np.cross(mag, z_earth_imu) / norm(np.cross(mag, z_earth_imu))
     # y_earth_imu = np.cross(z_earth_imu, x_earth_imu) / norm(np.cross(z_earth_imu, x_earth_imu))
 
@@ -156,6 +166,12 @@ def vec_rotate_z(alph, vec):
 
 
 def quat2euler(quat):
+    """
+    Transforms quaternion into euler angles roll/alpha, pitch/beta, yaw/gamma
+    :param quat: the quaternion that should be transformed to euler angles
+    :return: roll, pitch, yaw in rad
+    :rtype: ndarray(3,)
+    """
     assert quat.shape == (4,)
 
     alpha = np.arctan2(2 * (quat[0]*quat[3] + quat[1] * quat[2]), 1 - 2 * (quat[2]**2 + quat[3]**2))

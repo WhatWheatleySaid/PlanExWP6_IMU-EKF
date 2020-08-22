@@ -559,7 +559,7 @@ class SimulationController(object):
                         self.quat_pre = np.array(qtools.quaternion_from_accmag(acc, mag).T)
                     #update:
                     self.quat_pre, self.P = ekf(self.P, self.sensor_rate,  gyr_pre, self.quat_pre, acc, mag)
-                    self.pos , self.vel = pos_estimation(self.sensor_rate, self.quat_pre, acc, self.vel, self.pos)
+                    self.pos , self.vel = pos_estimation(self.sensor_rate, self.quat_pre, acc, self.pos)
                     #continue to next index:
                     self.current_index = self.current_index + 1           
 
