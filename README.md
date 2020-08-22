@@ -1,6 +1,6 @@
 # PlanExWP6_IMU-EKF
 Code produced as part of the Technical University Berlin Summer Semester 2020 Course "Planetary Exploration and Space Robotics"
-
+![simulation_controller_gui](https://user-images.githubusercontent.com/38326114/90962885-c2ff1f80-e4b3-11ea-8757-6d28c550bb2c.png)
 # Extended Kalman Filter
 
 ### Description
